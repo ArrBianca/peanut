@@ -1,12 +1,6 @@
 import requests
 from flask import abort
 from flask import current_app as app
-from . import twitchapp
-
-@twitchapp.before_app_request
-def a():
-    app.config['_headers'] = {'Accept': 'application/vnd.twitchtv.v5+json',
-            'Client-ID': app.config['TWITCH_CLIENT_ID']}
 
 _prefix = 'https://api.twitch.tv/kraken'
 

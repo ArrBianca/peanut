@@ -1,6 +1,13 @@
 from . import twitchapp
 from .ttv import multifind, followed_streams, game_streamers
 from flask import render_template, jsonify
+from flask import current_app as app
+
+
+@twitchapp.before_app_request
+def a():
+    app.config['_headers'] = {'Accept': 'application/vnd.twitchtv.v5+json',
+            'Client-ID': app.config['TWITCH_CLIENT_ID']}
 
 
 @twitchapp.route('/')

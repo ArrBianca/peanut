@@ -18,7 +18,7 @@ import boto3
 UNREGISTERED_MAX_SIZE = 25 * 1024 * 1024
 ADMIN_MAX_SIZE = 25 * 1024 * 1024
 
-app = Flask(__name__)
+app = Flask(__name__, subdomain_matching=True)
 app.wsgi_app = ProxyFix(app.wsgi_app)
 
 app.url_map.default_subdomain = "www"

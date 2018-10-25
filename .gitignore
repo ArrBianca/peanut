@@ -1,0 +1,10 @@
+.idea/
+venv/
+instance/
+*.pyc
+__pycache__/
+pidfile
+tags
+peanut.sqlite
+.pylintrc
+

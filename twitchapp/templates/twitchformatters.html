@@ -1,0 +1,12 @@
+{% macro viewers(number) -%}
+  {% if number == 1 -%}
+    {{ number ~ " viewer" }}
+  {%- else -%}
+    {{ number ~ " viewers" }}
+  {%- endif %}
+{%- endmacro %}
+
+{%- macro twitch_link(name) -%}
+    {%- set link = "twitch.tv/"~name|trim -%}
+    <a href="{{ "http://"~link }}">{{ link }}</a>
+{%- endmacro %}

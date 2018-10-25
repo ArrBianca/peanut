@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8">
+    <link rel="icon" type="img/png" href="/static/twitchicon.png">
+    <link rel="stylesheet" type="text/css" href="/static/hoverbuddy.css">
+    <title>{{ title }}</title>
+</head>
+<body>
+
+<table align="center">
+  {% for counter in range(cols[0]|length) %}
+  <tr>
+    {%- for col in cols -%}
+      {% set colnum = loop.index0 %}
+      <td{% block cell_style scoped %}{% endblock %}>
+        {%- block cell scoped %}{{ col[counter] }}{% endblock -%}
+      </td>
+    {%- endfor %}
+  </tr>
+  {% endfor %}
+</table>
+</body>
+</html>

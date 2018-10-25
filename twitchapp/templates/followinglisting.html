@@ -1,0 +1,14 @@
+{% extends "columns.html" %}
+{% from "twitchformatters.html" import viewers, twitch_link %}
+
+{% block cell -%}
+  {%- if colnum == 0 -%}
+      <div class="hoverBuddy"><b>{{ super() }}</b><div class="hoverBox">{{ stats[counter] }}</div></div>
+  {%- elif colnum == 1 -%}
+    <i>{{ super() }}</i>
+  {%- elif colnum == 2 -%}
+    {{ viewers(super()) }}
+  {%- elif colnum == 3 -%}
+    {{ twitch_link(super()) }}
+  {%- endif -%}
+{%- endblock %}

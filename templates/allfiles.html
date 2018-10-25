@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+  <meta charset="UTF-8">
+  <title></title>
+  <link rel="icon" href="/static/favicon.png"/>
+</head>
+<body>
+<table width="100%">
+  {% for i in filelist %}
+    <tr>
+      <td>
+        <a href={{ "http://f.peanut.one/" + i }}>{{ "http://f.peanut.one/" + i }}</a>
+      </td>
+      <td>
+        {{ realnames[loop.index0] }}
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+</body>
+</html>

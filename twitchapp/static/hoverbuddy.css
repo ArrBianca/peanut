@@ -1,0 +1,25 @@
+.hoverBuddy {
+    position: relative;
+    display: inline-block;
+}
+
+.hoverBuddy .hoverBox {
+    display: none;
+    position: absolute;
+    background: #FFFFFF;
+    left: 105%;
+    top: 0;
+    width: 15em;
+    border: 4px solid #9e989a;
+    text-align: center;
+
+    padding: 3px 20px;
+    box-shadow: 7px 7px 9px #444444;
+    z-index: 1;
+}
+
+td {
+    padding: 8px 16px;
+}
+
+.hoverBuddy:hover .hoverBox { display: block; }

@@ -1,4 +1,0 @@
-import requests
-from . import smalltext
-from flask import request
-

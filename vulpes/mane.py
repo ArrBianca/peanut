@@ -3,7 +3,7 @@ import string
 import time
 
 from flask import Blueprint, render_template, request, current_app
-from connections import get_db
+from vulpes.connections import get_db
 
 from werkzeug.utils import secure_filename
 
@@ -14,7 +14,7 @@ bp = Blueprint('mane', __name__)
 
 @bp.route('/')
 def mainpage():
-    print(get_amazon())
+    print(request.args)
     return render_template('mainpage.html')
 
 

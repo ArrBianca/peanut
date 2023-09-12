@@ -9,7 +9,7 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
 
     app.config.from_mapping(
-        SECRET_KEY='dev',
+        # SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'peanut.sqlite'),
     )
 
@@ -26,15 +26,18 @@ def create_app(test_config=None):
     except OSError:
         pass
 
+    if app.config['SERVER_NAME'] == 'peanut.one':
+        app.url_map.default_subdomain = "www"
+
     from . import connections
     app.teardown_appcontext(connections.close_db)
 
-    from . import mane, twitch, podcast
+    from . import mane, twitch, snapcast
     app.register_blueprint(mane.bp)
     app.register_blueprint(twitch.bp)
-    app.register_blueprint(podcast.bp)
+    app.register_blueprint(snapcast.bp)
 
-    @app.before_request
+    #@app.before_request
     def redirect_nonwww():
         """Redirect non-www requests to www."""
         urlparts = urlparse(request.url)

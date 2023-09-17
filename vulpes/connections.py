@@ -1,20 +1,38 @@
 from flask import current_app, g
+import click
 from functools import wraps
 import sqlite3
 
 
-def uses_db(func):
-    @wraps(func)
-    def inner(*args, **kwargs):
-        # db = sqlite3.connect("peanut.sqlite")
-        db = sqlite3.connect(current_app.config['DATABASE'])
-        c: sqlite3.Cursor = db.cursor()
-        res = func(c, *args, **kwargs)
-        db.commit()
-        db.close()
-        return res
+def init_app(app):
+    app.teardown_appcontext(close_db)
+    app.cli.add_command(init_db_command)
+    app.cli.add_command(db_test_data)
 
-    return inner
+
+def init_db():
+    db = get_db()
+
+    with current_app.open_resource('db/schema.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+
+
+@click.command('init-db')
+def init_db_command():
+    """Clear the existing data and create new tables."""
+    init_db()
+    click.echo('Initialized the database.')
+
+
+@click.command('dummy-db')
+def db_test_data():
+    """Insert testing data into database"""
+    init_db()
+    db = get_db()
+
+    with current_app.open_resource('db/testdata.sql') as f:
+        db.executescript(f.read().decode('utf8'))
+    click.echo("Inserted testing data.")
 
 
 def get_db():
@@ -34,6 +52,3 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
-
-def init_db(app):
-    app.teardown_appcontext(close_db)

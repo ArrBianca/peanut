@@ -7,24 +7,34 @@ from vulpes.connections import get_db
 
 bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 
+QUERY_ADD_TEST_EPISODE = """
+    INSERT INTO episode (podcast_id, title, episode_uuid, media_url, media_size,
+                         media_type, media_duration, pub_date) 
+    VALUES (:podcast_id, :title, :episode_uuid, :media_url, :media_size, 
+            :media_type, :media_duration, :pub_date)"""
+QUERY_INSERT_EPISODE = """
+    INSERT INTO episode (podcast_id, episode_uuid, title, media_url, media_size, media_type, media_duration, pub_date) 
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
 
-@bp.route("/snapcast.xml")
-def generate_snapcast():
+
+@bp.route("/<feed_id>/feed.xml")
+def generate_feed(feed_id):
     db = get_db()
-    cast = db.execute("SELECT * FROM podcast WHERE id=1").fetchone()
-
+    res = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,))
+    cast = res.fetchone()
     p = Podcast(
         name=cast['name'],
         description=cast['description'],
         website=cast['website'],
         explicit=cast['explicit'],
         image=cast['image'],
-        withhold_from_itunes=True
+        authors=[Person(name=cast['author_name'])],
+        withhold_from_itunes=bool(cast['withhold_from_itunes'])
     )
-    p.authors = [Person("by June!", "june@peanut.one")]
 
-    eps = db.execute("SELECT * FROM episode WHERE podcast_id=1").fetchall()
-    for episode in eps:
+    res = db.execute("SELECT * FROM episode WHERE podcast_id=?", (cast['id'],))
+    episodes = res.fetchall()
+    for episode in episodes:
         e = Episode(
             id=episode['episode_uuid'],
             title=episode['title'],
@@ -38,10 +48,17 @@ def generate_snapcast():
                 duration=timedelta(seconds=episode['media_duration']),
             ),
             publication_date=datetime.fromisoformat(episode['pub_date']),
+            link=episode['link']
         )
         p.add_episode(e)
 
     return Response(p.rss_str(), mimetype='text/xml')
+
+
+@bp.route("/snapcast.xml")
+def generate_snapcast():
+    """legacyyyyy"""
+    return generate_feed('1787bd99-9d00-48c3-b763-5837f8652bd9')
 
 
 @bp.route("/snapcast/add_test")
@@ -56,10 +73,8 @@ def snapcast_test():
         "media_type": "audio/mpeg",
         "media_duration": timedelta(seconds=242).total_seconds(),
         "pub_date": datetime.now(timezone.utc)
-
     }
-    db.execute("INSERT INTO episode (podcast_id, title, episode_uuid, media_url, media_size, media_type, media_duration, pub_date) VALUES"
-               " (:podcast_id, :title, :episode_uuid, :media_url, :media_size, :media_type, :media_duration, :pub_date)", data)
+    db.execute(QUERY_ADD_TEST_EPISODE, data)
     db.commit()
     return "ok."
 
@@ -69,16 +84,18 @@ def snapcast_add_1(podcast_id):
     if request.args.get('passkey') != current_app.config['PODCAST_PUBLISH_AUTH']:
         return abort(401)
 
-    query = "INSERT INTO episode (podcast_id, episode_uuid, title, media_url, media_size, media_type, media_duration, pub_date) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"
     db = get_db()
 
-    # needs title, url, size (bytes), type (mime), duration (seconds) all in the url
-    url, size, ftype, duration = [request.args.get(k, type=t) for k, t in
-                                  zip("url size type duration".split(), (str, int) * 2)]
+    # title, url, size (bytes), type (mime), duration (seconds) all in the url
+    url, size, ftype, duration = [
+        request.args.get(k, type=t) for k, t in
+        zip("url size ftype duration".split(), (str, int) * 2)]
+
     title = request.args.get('title')
     if title is None:
         title = "Untitled"
 
-    data = [podcast_id, str(uuid4()), title, url, size, ftype, duration, datetime.now(timezone.utc)]
-    db.execute(query, data).connection.commit()
+    data = [podcast_id, str(uuid4()), title, url,
+            size, ftype, duration, datetime.now(timezone.utc)]
+    db.execute(QUERY_INSERT_EPISODE, data).connection.commit()
     return jsonify(success=True)

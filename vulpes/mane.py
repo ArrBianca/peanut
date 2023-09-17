@@ -11,6 +11,8 @@ from vulpes import get_amazon
 
 bp = Blueprint('mane', __name__)
 
+QUERY_SELECT_BY_FILENAME = "SELECT * FROM peanut_files WHERE filename=?"
+
 
 @bp.route('/')
 def mainpage():
@@ -41,10 +43,10 @@ def uploadbot():
 def randomname(ext=None):
     c = get_db()
     randname = ''.join([random.choice(string.ascii_lowercase)
-                        for _ in range(current_app.config['FILE_NAME_LENGTH'])])
+                       for _ in range(current_app.config['FILE_NAME_LENGTH'])])
     if ext is not None:
         randname = randname + '.' + ext
-    if c.execute("SELECT * FROM peanut_files WHERE filename=?", (randname,)).fetchone() is not None:
+    if c.execute(QUERY_SELECT_BY_FILENAME, (randname,)).fetchone() is not None:
         return randomname(ext)
     else:
         return randname
@@ -58,8 +60,8 @@ def performupload(f, customname=None):
     filename = secure_filename(f.filename)
     ext = [x[-1] if len(x) > 1 else None for x in [filename.split('.')]][0]
     if customname is not None:
-        if (c.execute("SELECT * FROM peanut_files WHERE filename=?", (customname,))
-                .fetchone() is not None):
+        result = c.execute(QUERY_SELECT_BY_FILENAME, (customname,)).fetchone()
+        if result is not None:
             return None
         else:
             newname = customname + "." + ext
@@ -73,8 +75,9 @@ def performupload(f, customname=None):
     c.execute("INSERT INTO peanut_files VALUES (?, ?, ?, ?)",
               (newname, size, filename, time.time()))
     # amazon.upload(newname, f.stream)
-    get_amazon().upload_fileobj(f, 'f.peanut.one', newname,
-                                ExtraArgs={'ACL': 'public-read', 'ContentType': f.mimetype})
+    get_amazon().upload_fileobj(
+        f, 'f.peanut.one', newname,
+        ExtraArgs={'ACL': 'public-read', 'ContentType': f.mimetype})
 
     # deletewithinquota(c)
     return newname

@@ -9,8 +9,8 @@ def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
 
     app.config.from_mapping(
-        # SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'peanut.sqlite'),
+        SECRET_KEY='dev',
+        DATABASE=os.path.join(app.instance_path, 'vulpes.sqlite'),
     )
 
     if test_config is None:
@@ -30,16 +30,17 @@ def create_app(test_config=None):
         app.url_map.default_subdomain = "www"
 
     from . import connections
-    app.teardown_appcontext(connections.close_db)
+    connections.init_app(app)
 
     from . import mane, twitch, snapcast
     app.register_blueprint(mane.bp)
     app.register_blueprint(twitch.bp)
     app.register_blueprint(snapcast.bp)
 
-    #@app.before_request
+    # @app.before_request
     def redirect_nonwww():
-        """Redirect non-www requests to www."""
+        """Redirect non-www requests to www.
+        I think this is not necessary on NFS when configured with"""
         urlparts = urlparse(request.url)
         if urlparts.netloc == 'peanut.one':
             urlparts_list = list(urlparts)

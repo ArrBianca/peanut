@@ -9,9 +9,9 @@ bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 
 QUERY_ADD_TEST_EPISODE = """
     INSERT INTO episode (podcast_id, title, episode_uuid, media_url, media_size,
-                         media_type, media_duration, pub_date) 
+                         media_type, media_duration, pub_date, link) 
     VALUES (:podcast_id, :title, :episode_uuid, :media_url, :media_size, 
-            :media_type, :media_duration, :pub_date)"""
+            :media_type, :media_duration, :pub_date, :link)"""
 QUERY_INSERT_EPISODE = """
     INSERT INTO episode (podcast_id, episode_uuid, title, media_url, media_size, media_type, media_duration, pub_date) 
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
@@ -48,7 +48,8 @@ def generate_feed(feed_id):
                 duration=timedelta(seconds=episode['media_duration']),
             ),
             publication_date=datetime.fromisoformat(episode['pub_date']),
-            link=episode['link']
+            link=episode['link'],
+            image=episode['episode_art']
         )
         p.add_episode(e)
 

@@ -87,18 +87,31 @@ def snapcast_add_1(podcast_id):
     if request.args.get('passkey') != current_app.config['PODCAST_PUBLISH_AUTH']:
         return abort(401)
 
+    json = request.json
     db = get_db()
 
-    # title, url, size (bytes), type (mime), duration (seconds) all in the url
-    url, size, ftype, duration = [
-        request.args.get(k, type=t) for k, t in
-        zip("url size ftype duration".split(), (str, int) * 2)]
+    # title, url, size (bytes), type (mime), duration (seconds) all in the ~~url~~ request body
+    # url, size, ftype, duration = [
+    #     request.args.get(k, type=t) for k, t in
+    #     zip("url size ftype duration".split(), (str, int) * 2)]  # why would someone do this
+    #
+    # # title = request.args.get('title')
+    # if title is None:
+    #     title = "Untitled"
 
-    title = request.args.get('title')
-    if title is None:
-        title = "Untitled"
+    data = {
+        "podcast_id":       podcast_id,
+        "title":            json.get('title', "Untitled"),
+        "episode_uuid":     str(uuid4()),
+        "media_url":        json['url'],
+        "media_size":       int(json['size']),
+        "media_type":       json['ftype'],
+        "media_duration":   int(json['duration']),
+        "pub_date":         datetime.now(timezone.utc),
+        "link":             json['link']
+    }
 
-    data = [podcast_id, str(uuid4()), title, url,
-            size, ftype, duration, datetime.now(timezone.utc)]
-    db.execute(QUERY_INSERT_EPISODE, data).connection.commit()
+    # data = [podcast_id, str(uuid4()), title, json['url'],
+    #         size, ftype, duration, datetime.now(timezone.utc)]
+    db.execute(QUERY_ADD_TEST_EPISODE, data).connection.commit()
     return jsonify(success=True)

@@ -1,5 +1,5 @@
 from flask import Blueprint, Response, request, jsonify, current_app, abort
-from podgen import Podcast, Episode, Media, Person
+from podgen import Podcast, Episode, Media, Person, Category
 from datetime import datetime, timedelta, timezone
 from uuid import uuid4
 
@@ -26,6 +26,8 @@ def generate_feed(feed_id):
         name=cast['name'],
         description=cast['description'],
         website=cast['website'],
+        category=Category(cast['category']),
+        language="en-US",
         explicit=cast['explicit'],
         image=cast['image'],
         authors=[Person(name=cast['author_name'])],

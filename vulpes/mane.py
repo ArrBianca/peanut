@@ -66,7 +66,6 @@ def performupload(f, customname=None):
         else:
             newname = customname + "." + ext
     else:
-        # noinspection PyTypeChecker
         newname = randomname(ext)
 
     f.seek(0, 2)
@@ -107,4 +106,3 @@ def performupload(f, customname=None):
 #
 #         # c.executemany("DELETE FROM peanut_files WHERE filename=%s",
 #         #               [(x,) for x in unlucky])
-

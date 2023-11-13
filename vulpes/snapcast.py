@@ -90,28 +90,24 @@ def snapcast_add_1(podcast_id):
     json = request.json
     db = get_db()
 
-    # title, url, size (bytes), type (mime), duration (seconds) all in the ~~url~~ request body
-    # url, size, ftype, duration = [
-    #     request.args.get(k, type=t) for k, t in
-    #     zip("url size ftype duration".split(), (str, int) * 2)]  # why would someone do this
-    #
-    # # title = request.args.get('title')
-    # if title is None:
-    #     title = "Untitled"
+    if timestamp := json.get('timestamp'):
+        pub_date = datetime.fromtimestamp(timestamp, timezone.utc)
+    else:
+        pub_date = datetime.now(timezone.utc)
 
     data = {
         "podcast_id":       podcast_id,
-        "title":            json.get('title', "Untitled"),
+        "title":            json.get('title', "Untitled Episode"),
+
         "episode_uuid":     str(uuid4()),
         "media_url":        json['url'],
-        "media_size":       int(json['size']),
+        "media_size":       json['size'],
         "media_type":       json['ftype'],
-        "media_duration":   int(json['duration']),
-        "pub_date":         datetime.now(timezone.utc),
-        "link":             json['link']
+
+        "media_duration":   json['duration'],
+        "pub_date":         pub_date,
+        "link":             json.get('link'),
     }
 
-    # data = [podcast_id, str(uuid4()), title, json['url'],
-    #         size, ftype, duration, datetime.now(timezone.utc)]
     db.execute(QUERY_ADD_TEST_EPISODE, data).connection.commit()
     return jsonify(success=True)

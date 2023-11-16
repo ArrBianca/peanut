@@ -1,9 +1,11 @@
-from flask import Blueprint, Response, request, jsonify, current_app, abort
-from podgen import Podcast, Episode, Media, Person, Category
 from datetime import datetime, timedelta, timezone
+from functools import wraps
 from uuid import uuid4
 
-from vulpes.connections import get_db
+from flask import Blueprint, Response, request, jsonify, current_app, abort
+from podgen import Podcast, Episode, Media, Person, Category
+
+from vulpes.connections import uses_db
 
 bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 
@@ -17,9 +19,19 @@ QUERY_INSERT_EPISODE = """
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
 
 
+def authorization_required(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        if request.args.get('passkey') == current_app.config['PODCAST_PUBLISH_AUTH']:
+            return func(*args, **kwargs)
+        else:
+            return abort(401)
+    return inner
+
+
 @bp.route("/<feed_id>/feed.xml")
-def generate_feed(feed_id):
-    db = get_db()
+@uses_db
+def generate_feed(db, feed_id):
     res = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,))
     cast = res.fetchone()
     p = Podcast(
@@ -83,12 +95,21 @@ def snapcast_test():
 
 
 @bp.route("/<podcast_id>/publish_episode", methods=["POST"])
-def snapcast_add_1(podcast_id):
-    if request.args.get('passkey') != current_app.config['PODCAST_PUBLISH_AUTH']:
-        return abort(401)
-
+@authorization_required
+@uses_db
+def publish_episode(db, podcast_id):
+    """
+    Required elements in JSON request body:
+        url:       str,
+        size:      int,
+        ftype:     str,
+        duration:  int,
+    Optional elements:
+        title:     str,
+        link:      str,
+        timestamp: int,
+    """
     json = request.json
-    db = get_db()
 
     if timestamp := json.get('timestamp'):
         pub_date = datetime.fromtimestamp(timestamp, timezone.utc)

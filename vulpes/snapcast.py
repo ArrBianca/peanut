@@ -196,5 +196,3 @@ def get_all_episodes(db, podcast_uuid):
     results = db.execute("select * from episode where podcast_id=(SELECT id from podcast where feed_id=? limit 1)", (podcast_uuid,))
 
     return jsonify([dict(row) for row in results.fetchall()])
-
-

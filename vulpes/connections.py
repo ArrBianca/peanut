@@ -52,3 +52,10 @@ def close_db(e=None):
     if db is not None:
         db.close()
 
+
+def uses_db(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        db = get_db()
+        return func(db, *args, **kwargs)
+    return inner

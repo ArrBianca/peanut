@@ -77,8 +77,8 @@ def generate_snapcast():
 
 
 @bp.route("/snapcast/add_test")
-def snapcast_test():
-    db = get_db()
+@uses_db
+def snapcast_test(db):
     data = {
         "podcast_id": 1,
         "title": "Test Episode3",
@@ -132,3 +132,69 @@ def publish_episode(db, podcast_id):
 
     db.execute(QUERY_ADD_TEST_EPISODE, data).connection.commit()
     return jsonify(success=True)
+
+
+@bp.route("/episode/<episode_uuid>", methods=["GET"])
+@uses_db
+def get_episode(db, episode_uuid):
+    result = db.execute("select * from episode where episode_uuid=?", (episode_uuid,)).fetchone()
+    return jsonify(dict(result))
+
+
+@bp.route("/episode/id/<episode_id>", methods=["GET"])
+@uses_db
+def get_episode_by_id(db, episode_id):
+    result = db.execute("select * from episode where id=?", (episode_id,)).fetchone()
+    return jsonify(dict(result))
+
+
+@bp.route("/episode/<episode_uuid>", methods=["PATCH"])
+@authorization_required
+@uses_db
+def patch_episode(db, episode_uuid):
+    """Just give it a dict with key=rowname value=newvalue. let's get naive up in here"""
+    json = request.json
+
+    rows = 0
+    for key in json.keys():
+        result = db.execute("UPDATE episode SET ?=? WHERE episode_uuid=?", (key, json[key], episode_uuid))
+        rows += result.rowcount
+
+    return jsonify(success=True, rows=rows)
+
+
+@bp.route("/episode/<episode_uuid>", methods=["DELETE"])
+@authorization_required
+@uses_db
+def delete_episode(db, episode_uuid):
+    result = db.execute("DELETE FROM episode WHERE episode_uuid=?", (episode_uuid,))
+    db.commit()
+
+    if result.rowcount == 0:
+        return abort(404)
+    else:
+        return jsonify(success=True)
+
+
+@bp.route("/episode/id/<episode_id>", methods=["DELETE"])
+@authorization_required
+@uses_db
+def delete_episode_by_id(db, episode_id):
+    result = db.execute("DELETE FROM episode WHERE id=?", (episode_id,))
+    db.commit()
+
+    if result.rowcount == 0:
+        return abort(404)
+    else:
+        return jsonify(success=True)
+
+
+@bp.route("/podcast/<podcast_uuid>/episodes", methods=["GET"])
+@authorization_required
+@uses_db
+def get_all_episodes(db, podcast_uuid):
+    results = db.execute("select * from episode where podcast_id=(SELECT id from podcast where feed_id=? limit 1)", (podcast_uuid,))
+
+    return jsonify([dict(row) for row in results.fetchall()])
+
+

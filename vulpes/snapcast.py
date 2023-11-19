@@ -126,10 +126,10 @@ def publish_episode(db, podcast_id):
         "media_url":        json['url'],
         "media_size":       json['size'],
         "media_type":       json['ftype'],
-
         "media_duration":   json['duration'],
-        "pub_date":         pub_date,
+
         "link":             json.get('link'),
+        "pub_date":         pub_date,
     }
 
     db.execute(QUERY_ADD_TEST_EPISODE, data).connection.commit()

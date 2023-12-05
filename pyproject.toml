@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "peanut"
+version = "0.1.0"
+description = ""
+authors = ["June <june@peanut.one>"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+Flask = "^3.0.0"
+podgen = "^1.1.0"
+boto3 = "^1.33.7"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

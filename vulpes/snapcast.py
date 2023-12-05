@@ -49,6 +49,9 @@ def generate_feed(db, feed_id):
     res = db.execute("SELECT * FROM episode WHERE podcast_id=?", (cast['id'],))
     episodes = res.fetchall()
     for episode in episodes:
+        if media_duration := episode['media_duration']:
+            media_duration = timedelta(seconds=media_duration)
+
         e = Episode(
             id=episode['episode_uuid'],
             title=episode['title'],
@@ -59,7 +62,7 @@ def generate_feed(db, feed_id):
                 episode['media_url'],
                 size=episode['media_size'],
                 type=episode['media_type'],
-                duration=timedelta(seconds=episode['media_duration']),
+                duration=media_duration,
             ),
             publication_date=datetime.fromisoformat(episode['pub_date']),
             link=episode['link'],
@@ -103,8 +106,8 @@ def publish_episode(db, podcast_id):
         url:       str,
         size:      int,
         ftype:     str,
-        duration:  int,
     Optional elements:
+        duration:  int,
         title:     str,
         subtitle:  str,
         link:      str,
@@ -126,7 +129,7 @@ def publish_episode(db, podcast_id):
         "media_url":        json['url'],
         "media_size":       json['size'],
         "media_type":       json['ftype'],
-        "media_duration":   json['duration'],
+        "media_duration":   json.get('duration'),
 
         "link":             json.get('link'),
         "pub_date":         pub_date,

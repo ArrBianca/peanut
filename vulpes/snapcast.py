@@ -166,8 +166,10 @@ def patch_episode(db, episode_uuid):
 
     rows = 0
     for key in json.keys():
-        result = db.execute("UPDATE episode SET ?=? WHERE episode_uuid=?", (key, json[key], episode_uuid))
+        result = db.execute(f"UPDATE episode SET {key}=? WHERE episode_uuid=?",
+                            (json[key], episode_uuid))
         rows += result.rowcount
+    db.commit()
 
     return jsonify(success=True, rows=rows)
 

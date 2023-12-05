@@ -8,3 +8,4 @@ tags
 peanut.sqlite
 .pylintrc
 
+.DS_Store

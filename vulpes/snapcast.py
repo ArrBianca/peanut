@@ -150,7 +150,11 @@ def get_episode(db, episode_uuid):
 @uses_db
 def get_episode_by_id(db, episode_id):
     result = db.execute("select * from episode where id=?", (episode_id,)).fetchone()
-    return jsonify(dict(result))
+
+    if result is None:
+        return abort(404)
+    else:
+        return jsonify(dict(result))
 
 
 @bp.route("/episode/<episode_uuid>", methods=["PATCH"])

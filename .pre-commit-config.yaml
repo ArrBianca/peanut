@@ -5,6 +5,7 @@ repos:
     -   id: poetry-check
     -   id: poetry-lock
     -   id: poetry-install
+        args: ["--no-root"]
 -   repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v4.5.0
     hooks:

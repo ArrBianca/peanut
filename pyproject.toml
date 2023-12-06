@@ -11,6 +11,9 @@ Flask = "^3.0.0"
 podgen = "^1.1.0"
 boto3 = "^1.33.7"
 
+[tool.poetry.group.dev]
+optional = true
+
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.5.0"
 

@@ -17,6 +17,9 @@ ADD_TEST_EPISODE = """
 INSERT_EPISODE = """
     INSERT INTO episode (podcast_id, episode_uuid, title, media_url, media_size, media_type, media_duration, pub_date)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
+SELECT_LATEST_EPISODE = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
+SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE id=?"""
+SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE episode_uuid=?"""
 
 
 def authorization_required(func):
@@ -139,17 +142,21 @@ def publish_episode(db, podcast_id):
     return jsonify(success=True)
 
 
-@bp.route("/episode/<episode_uuid>", methods=["GET"])
+@bp.route("/episode/<episode_id>", methods=["GET"])
 @uses_db
-def get_episode(db, episode_uuid):
-    result = db.execute("select * from episode where episode_uuid=?", (episode_uuid,)).fetchone()
-    return jsonify(dict(result))
-
-
-@bp.route("/episode/id/<episode_id>", methods=["GET"])
-@uses_db
-def get_episode_by_id(db, episode_id):
-    result = db.execute("select * from episode where id=?", (episode_id,)).fetchone()
+def get_episode(db, episode_id):
+    """
+    Fetches details of a specific episode. Either an integer episode number,
+    a UUID, or -1 which returns the latest episode.
+    """
+    try:
+        episode_id = int(episode_id)
+        if episode_id == -1:  # Special case: get the latest episode
+            result = db.execute(SELECT_LATEST_EPISODE).fetchone()
+        else:
+            result = db.execute(SELECT_EPISODE_BY_ID, (episode_id,)).fetchone()
+    except ValueError:  # Not integer-y, so a UUID.
+        result = db.execute(SELECT_EPISODE_BY_UUID, (episode_id,)).fetchone()
 
     if result is None:
         return abort(404)

@@ -15,6 +15,8 @@ QUERY_SELECT_BY_FILENAME = "SELECT * FROM peanut_files WHERE filename=?"
 
 @bp.route('/')
 def mainpage():
+    print(request.headers)
+    print(request.remote_addr)
     return render_template('mainpage.html')
 
 

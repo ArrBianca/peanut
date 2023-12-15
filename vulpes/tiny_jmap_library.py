@@ -89,16 +89,24 @@ class TinyJMAPClient:
         self.identity_id = str(identity_id)
         return self.identity_id
 
-    def make_jmap_call(self, call):
+    def make_jmap_call(self, call, is_file=False, url=None):
         """Make a JMAP POST request to the API, returning the response as a
         Python data structure."""
+        if is_file:
+            data = call.read()
+        else:
+            data = json.dumps(call)
+
+        if url is None:
+            url = self.api_url
+
         res = requests.post(
-            self.api_url,
+            url,
             headers={
                 "Content-Type": "application/json",
                 "Authorization": f"Bearer {self.token}",
             },
-            data=json.dumps(call),
+            data=data,
         )
         res.raise_for_status()
         return res.json()

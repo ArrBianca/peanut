@@ -4,3 +4,10 @@
         align-items: center;
         flex-flow: column;
     }
+
+  @media (prefers-color-scheme: dark) {
+      .adaptive {
+          background: #1C1C1C;
+          color: aliceblue;
+      }
+  }

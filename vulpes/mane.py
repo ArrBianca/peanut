@@ -3,7 +3,7 @@ import string
 import time
 
 from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
-from vulpes.connections import get_db
+from vulpes.connections import get_db, uses_db
 
 from vulpes.tiny_jmap_library import TinyJMAPClient
 from werkzeug.utils import secure_filename
@@ -60,15 +60,16 @@ def randomname(ext=None):
         return randname
 
 
-def performupload(f, customname=None):
-    c = get_db()
+@uses_db
+def performupload(db, f, customname=None):
+
     if not f:
         return None
 
     filename = secure_filename(f.filename)
     ext = [x[-1] if len(x) > 1 else None for x in [filename.split('.')]][0]
     if customname is not None:
-        result = c.execute(QUERY_SELECT_BY_FILENAME, (customname,)).fetchone()
+        result = db.execute(QUERY_SELECT_BY_FILENAME, (customname,)).fetchone()
         if result is not None:
             return None
         else:
@@ -79,8 +80,9 @@ def performupload(f, customname=None):
     f.seek(0, 2)
     size = f.tell()
     f.seek(0, 0)
-    c.execute("INSERT INTO peanut_files VALUES (?, ?, ?, ?)",
-              (newname, size, filename, time.time()))
+    db.execute("INSERT INTO peanut_files VALUES (?, ?, ?, ?)",
+               (newname, size, filename, int(time.time())))
+    db.commit()
     # amazon.upload(newname, f.stream)
     get_amazon().upload_fileobj(
         f, 'f.peanut.one', newname,

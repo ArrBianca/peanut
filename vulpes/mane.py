@@ -94,10 +94,7 @@ Original filename: {f.filename}
 Filesize: {size / 1024 / 1024:.2F}MB
 
 Rad.
-
-Anyway, that's everything. Thanks for your time,
--- Peanut
-    """
+"""
 
     query_res = client.make_jmap_call(
         {

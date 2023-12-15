@@ -19,6 +19,7 @@ class TinyJMAPClient:
         self.token = token
         self.session = None
         self.api_url = None
+        self.upload_url = None
         self.account_id = None
         self.identity_id = None
 
@@ -48,6 +49,18 @@ class TinyJMAPClient:
         account_id = session["primaryAccounts"]["urn:ietf:params:jmap:mail"]
         self.account_id = account_id
         return account_id
+
+    def get_upload_url(self):
+        """Return the account's upload url for attachments"""
+        if self.upload_url:
+            return self.upload_url
+
+        session = self.get_session()
+        account_id = self.get_account_id()
+
+        upload_url = session["uploadUrl"].replace("{accountId}", self.account_id)
+        self.upload_url = upload_url
+        return upload_url
 
     def get_identity_id(self):
         """Return the identityId for an address matching self.username"""

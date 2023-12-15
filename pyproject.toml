@@ -10,7 +10,6 @@ python = "^3.10"
 Flask = "^3.0.0"
 podgen = "^1.1.0"
 boto3 = "^1.33.7"
-jmapc = "^0.2.18"
 
 [tool.poetry.group.dev]
 optional = true

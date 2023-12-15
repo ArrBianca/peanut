@@ -5,7 +5,7 @@ import time
 from flask import Blueprint, render_template, request, current_app as app
 from vulpes.connections import get_db
 
-from tiny_jmap_library import TinyJMAPClient
+from vulpes.tiny_jmap_library import TinyJMAPClient
 from werkzeug.utils import secure_filename
 
 from vulpes import get_amazon

@@ -6,7 +6,6 @@ from flask import Flask, render_template, g, request, redirect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 
-
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.wsgi_app = ProxyFix(app.wsgi_app)

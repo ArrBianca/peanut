@@ -3,14 +3,10 @@ import string
 import time
 
 from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
-from requests import post
-
-from vulpes.connections import get_db, uses_db
-
-from vulpes.tiny_jmap_library import TinyJMAPClient
 from werkzeug.utils import secure_filename
 
 from vulpes import get_amazon
+from vulpes.connections import get_db, uses_db, uses_jmap
 
 bp = Blueprint('mane', __name__)
 
@@ -63,28 +59,17 @@ def randomname(ext=None):
         return randname
 
 
-def send_file(f):
+@uses_jmap
+def send_file(client, f):
     f.seek(0, 2)
     size = f.tell()
     f.seek(0, 0)
 
-    client = TinyJMAPClient(
-        hostname=app.config["JMAP_HOSTNAME"],
-        username=app.config["JMAP_USERNAME"],
-        token=app.config["JMAP_TOKEN"],
-    )
-
     account_id = client.get_account_id()
     identity_id = client.get_identity_id()
+    upload_url = client.get_upload_url()
 
-    uploaded = post(
-        f"https://api.fastmail.com/jmap/upload/{account_id}/",
-        headers={
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {client.token}",
-        },
-        data=f.read()
-    ).json()
+    uploaded = client.make_jmap_call(f, is_file=True, url=upload_url)
 
     body = f"""Hi June!
 

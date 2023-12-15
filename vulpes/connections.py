@@ -3,7 +3,7 @@ import click
 from functools import wraps
 import sqlite3
 
-from tiny_jmap_library import TinyJMAPClient
+from vulpes.tiny_jmap_library import TinyJMAPClient
 
 
 def init_app(app):

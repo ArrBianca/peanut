@@ -16,7 +16,7 @@
         <input type="file" name="file">
         <label>
             <span class="font-small">Dropbox?</span>
-            <input type="checkbox" name="dropbox" checked="{{ dropbox }}"/>
+            <input type="checkbox" name="dropbox"{{ " checked" if dropbox }}/>
         </label>
         <input type="submit" value="Upload"/>
     </form>

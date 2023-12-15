@@ -3,6 +3,8 @@ import string
 import time
 
 from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
+from requests import post
+
 from vulpes.connections import get_db, uses_db
 
 from vulpes.tiny_jmap_library import TinyJMAPClient
@@ -28,12 +30,13 @@ def dropbox():
 @bp.route('/upload', methods=["POST"])
 def upload():
     f = request.files["file"]
+    if request.args.get('dropbox') == 'true':
+        send_file(f)
+        return redirect(url_for('mane.dropbox'))
+
     filename = performupload(f)
     if filename is not None:
-        if request.args.get('dropbox') == 'true':
-            return redirect(url_for('mane.dropbox'))
-        else:
-            return render_template("fileuploaded.html", link=filename)
+        return render_template("fileuploaded.html", link=filename)
     else:
         return "Error, probably an empty upload field"
 
@@ -58,6 +61,101 @@ def randomname(ext=None):
         return randomname(ext)
     else:
         return randname
+
+
+def send_file(f):
+    f.seek(0, 2)
+    size = f.tell()
+    f.seek(0, 0)
+
+    client = TinyJMAPClient(
+        hostname=app.config["JMAP_HOSTNAME"],
+        username=app.config["JMAP_USERNAME"],
+        token=app.config["JMAP_TOKEN"],
+    )
+
+    account_id = client.get_account_id()
+    identity_id = client.get_identity_id()
+
+    uploaded = post(
+        f"https://api.fastmail.com/jmap/upload/{account_id}/",
+        headers={
+            "Content-Type": "application/json",
+            "Authorization": f"Bearer {client.token}",
+        },
+        data=f.read()
+    ).json()
+
+    body = f"""
+    Hi June!
+
+    Someone just uploaded a file to peanut.one!
+
+    Original filename: {f.filename}
+    Filesize: {size / 1024 / 1024:.2F}MB
+
+    Rad.
+
+    I can also tell you that, as far as I can tell, the upload came from {request.remote_addr} though it's likely obscured.
+
+    Anyway, that's everything. Thanks for your time,
+    -- Peanut
+
+    """
+
+    query_res = client.make_jmap_call(
+        {
+            "using": ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"],
+            "methodCalls": [
+                [
+                    "Mailbox/query",
+                    {"accountId": account_id, "filter": {"name": "Drafts"}},
+                    "a",
+                ]
+            ],
+        }
+    )
+
+    # Pull out the id from the list response, and make sure we got it
+    draft_mailbox_id = query_res["methodResponses"][0][1]["ids"][0]
+    assert len(draft_mailbox_id) > 0
+
+    draft = {
+        "from": [{"email": "peanut@peanut.one"}],
+        "to": [{"email": "june@peanut.one"}],
+        "subject": "File for ya!",
+        "keywords": {"$draft": True},
+        "mailboxIds": {draft_mailbox_id: True},
+        "bodyValues": {"body": {"value": body, "charset": "utf-8"}},
+        "textBody": [{"partId": "body", "type": "text/plain"}],
+        "attachments": [{"blobId": uploaded["blobId"], "type": uploaded["type"], "name": f.filename}]
+    }
+
+    client.make_jmap_call(
+        {
+            "using": ["urn:ietf:params:jmap:core",
+                      "urn:ietf:params:jmap:mail",
+                      "urn:ietf:params:jmap:submission"
+                      ],
+            "methodCalls": [
+                ["Email/set", {"accountId": account_id, "create": {"draft": draft}}, "a"],
+                [
+                    "EmailSubmission/set",
+                    {
+                        "accountId": account_id,
+                        "onSuccessDestroyEmail": ["#sendIt"],
+                        "create": {
+                            "sendIt": {
+                                "emailId": "#draft",
+                                "identityId": identity_id,
+                            }
+                        },
+                    },
+                    "b",
+                ],
+            ],
+        }
+    )
 
 
 @uses_db
@@ -87,85 +185,6 @@ def performupload(db, f, customname=None):
     get_amazon().upload_fileobj(
         f, 'f.peanut.one', newname,
         ExtraArgs={'ACL': 'public-read', 'ContentType': f.mimetype})
-
-    client = TinyJMAPClient(
-        hostname=app.config["JMAP_HOSTNAME"],
-        username=app.config["JMAP_USERNAME"],
-        token=app.config["JMAP_TOKEN"],
-    )
-
-    account_id = client.get_account_id()
-    identity_id = client.get_identity_id()
-
-    body = f"""
-    Hi June!
-
-    Someone just uploaded a file to peanut.one!
-
-    Original filename: {filename}
-    Filesize: {size / 1024 / 1024:.2F}MB
-    Linky Linky: http://f.peanut.one/{newname}
-
-    Rad.
-
-    I can also tell you that, as far as I can tell, the upload came from {request.remote_addr} though it's likely obscured.
-
-    Anyway, that's everything. Thanks for your time,
-    -- Peanut
-    """
-
-    query_res = client.make_jmap_call(
-        {
-            "using": ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"],
-            "methodCalls": [
-                [
-                    "Mailbox/query",
-                    {"accountId": account_id, "filter": {"name": "Drafts"}},
-                    "a",
-                ]
-            ],
-        }
-    )
-
-    # Pull out the id from the list response, and make sure we got it
-    draft_mailbox_id = query_res["methodResponses"][0][1]["ids"][0]
-    assert len(draft_mailbox_id) > 0
-
-    draft = {
-        "from": [{"email": "peanut@peanut.one"}],
-        "to": [{"email": "june@peanut.one"}],
-        "subject": "File for ya!",
-        "keywords": {"$draft": True},
-        "mailboxIds": {draft_mailbox_id: True},
-        "bodyValues": {"body": {"value": body, "charset": "utf-8"}},
-        "textBody": [{"partId": "body", "type": "text/plain"}],
-    }
-
-    client.make_jmap_call(
-        {
-            "using": ["urn:ietf:params:jmap:core",
-                      "urn:ietf:params:jmap:mail",
-                      "urn:ietf:params:jmap:submission"
-                      ],
-            "methodCalls": [
-                ["Email/set", {"accountId": account_id, "create": {"draft": draft}}, "a"],
-                [
-                    "EmailSubmission/set",
-                    {
-                        "accountId": account_id,
-                        "onSuccessDestroyEmail": ["#sendIt"],
-                        "create": {
-                            "sendIt": {
-                                "emailId": "#draft",
-                                "identityId": identity_id,
-                            }
-                        },
-                    },
-                    "b",
-                ],
-            ],
-        }
-    )
 
     # deletewithinquota(c)
     return newname

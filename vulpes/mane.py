@@ -86,19 +86,17 @@ def send_file(f):
         data=f.read()
     ).json()
 
-    body = f"""
-    Hi June!
+    body = f"""Hi June!
 
-    Someone just uploaded a file to peanut.one!
+Someone just uploaded a file to the dropbox!
 
-    Original filename: {f.filename}
-    Filesize: {size / 1024 / 1024:.2F}MB
+Original filename: {f.filename}
+Filesize: {size / 1024 / 1024:.2F}MB
 
-    Rad.
+Rad.
 
-    Anyway, that's everything. Thanks for your time,
-    -- Peanut
-
+Anyway, that's everything. Thanks for your time,
+-- Peanut
     """
 
     query_res = client.make_jmap_call(

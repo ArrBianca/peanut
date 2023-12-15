@@ -96,8 +96,6 @@ def send_file(f):
 
     Rad.
 
-    I can also tell you that, as far as I can tell, the upload came from {request.remote_addr} though it's likely obscured.
-
     Anyway, that's everything. Thanks for your time,
     -- Peanut
 

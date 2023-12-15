@@ -2,7 +2,7 @@ import random
 import string
 import time
 
-from flask import Blueprint, render_template, request, current_app as app
+from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
 from vulpes.connections import get_db
 
 from vulpes.tiny_jmap_library import TinyJMAPClient
@@ -20,12 +20,20 @@ def mainpage():
     return render_template('mainpage.html')
 
 
+@bp.route('/dropbox')
+def dropbox():
+    return render_template('dropbox_mainpage.html')
+
+
 @bp.route('/upload', methods=["POST"])
 def upload():
     f = request.files["file"]
     filename = performupload(f)
     if filename is not None:
-        return render_template("fileuploaded.html", link=filename)
+        if request.args.get('dropbox') == 'true':
+            return redirect(url_for('mane.dropbox'))
+        else:
+            return render_template("fileuploaded.html", link=filename)
     else:
         return "Error, probably an empty upload field"
 

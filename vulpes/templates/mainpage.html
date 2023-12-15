@@ -11,10 +11,14 @@
 <body class="adaptive">
 
 <div class="centered-thing">
-    <img src="/static/peanut-the-fox.webp" style="max-width: 100%;height: auto">
+    <img src="/static/peanut-the-fox.webp" class="the-boy">
     <form method="POST" action="/upload" enctype="multipart/form-data">
         <input type="file" name="file">
-        <input type="submit" value="Upload" />
+        <label>
+            <span class="font-small">Dropbox?</span>
+            <input type="checkbox" name="dropbox" checked="{{ dropbox }}"/>
+        </label>
+        <input type="submit" value="Upload"/>
     </form>
 </div>
 </body>

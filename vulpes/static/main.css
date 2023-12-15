@@ -5,6 +5,15 @@
         flex-flow: column;
     }
 
+    .the-boy {
+        max-width: 100%;
+        height: auto;
+    }
+
+    .font-small {
+        font-size: small;
+    }
+
   @media (prefers-color-scheme: dark) {
       .adaptive {
           background: #1C1C1C;

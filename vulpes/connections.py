@@ -3,6 +3,8 @@ import click
 from functools import wraps
 import sqlite3
 
+from tiny_jmap_library import TinyJMAPClient
+
 
 def init_app(app):
     app.teardown_appcontext(close_db)
@@ -58,4 +60,16 @@ def uses_db(func):
     def inner(*args, **kwargs):
         db = get_db()
         return func(db, *args, **kwargs)
+    return inner
+
+
+def uses_jmap(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        client = TinyJMAPClient(
+            hostname=current_app.config["JMAP_HOSTNAME"],
+            username=current_app.config["JMAP_USERNAME"],
+            token=current_app.config["JMAP_TOKEN"],
+        )
+        return func(client, *args, **kwargs)
     return inner

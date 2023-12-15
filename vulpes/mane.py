@@ -24,13 +24,13 @@ def mainpage():
 
 @bp.route('/dropbox')
 def dropbox():
-    return render_template('dropbox_mainpage.html')
+    return render_template('mainpage.html', dropbox="checked")
 
 
 @bp.route('/upload', methods=["POST"])
 def upload():
     f = request.files["file"]
-    if request.args.get('dropbox') == 'true':
+    if request.form.get("dropbox"):
         send_file(f)
         return redirect(url_for('mane.dropbox'))
 

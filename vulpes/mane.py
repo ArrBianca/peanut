@@ -78,7 +78,6 @@ Someone just uploaded a file to the dropbox!
 Original filename: {f.filename}
 Filesize: {size / 1024 / 1024:.2F}MB
 
-Rad.
 """
 
     query_res = client.make_jmap_call(

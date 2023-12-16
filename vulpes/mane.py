@@ -2,7 +2,8 @@ import random
 import string
 import time
 
-from flask import Blueprint, render_template, request, current_app as app, redirect, url_for
+from celery import shared_task
+from flask import Blueprint, render_template, request, current_app as app, redirect, url_for, jsonify
 from werkzeug.utils import secure_filename
 
 from vulpes import get_amazon
@@ -18,6 +19,21 @@ def mainpage():
     return render_template('mainpage.html')
 
 
+@bp.route('/redis/<a>')
+def redis_ck(a):
+    result = square.delay(int(a))
+    return jsonify({'status': result.id})
+
+
+@shared_task(ignore_result=True)
+def square(v):
+    time.sleep(2)
+    return v * v
+
+
+@bp.route('/redis/done')
+
+
 @bp.route('/dropbox')
 def dropbox():
     return render_template('mainpage.html', dropbox="checked")
@@ -27,7 +43,10 @@ def dropbox():
 def upload():
     f = request.files["file"]
     if request.form.get("dropbox"):
-        send_file(f)
+        f.seek(0, 2)
+        size = f.tell()
+        f.seek(0, 0)
+        send_file.delay(size, f.read(), f.filename)
         return redirect(url_for('mane.dropbox'))
 
     filename = performupload(f)
@@ -59,12 +78,9 @@ def randomname(ext=None):
         return randname
 
 
+@shared_task(ignore_result=True)
 @uses_jmap
-def send_file(client, f):
-    f.seek(0, 2)
-    size = f.tell()
-    f.seek(0, 0)
-
+def send_file(client, size, f, filename):
     account_id = client.get_account_id()
     identity_id = client.get_identity_id()
     upload_url = client.get_upload_url()
@@ -75,7 +91,7 @@ def send_file(client, f):
 
 Someone just uploaded a file to the dropbox!
 
-Original filename: {f.filename}
+Original filename: {filename}
 Filesize: {size / 1024 / 1024:.2F}MB
 
 """
@@ -105,7 +121,7 @@ Filesize: {size / 1024 / 1024:.2F}MB
         "mailboxIds": {draft_mailbox_id: True},
         "bodyValues": {"body": {"value": body, "charset": "utf-8"}},
         "textBody": [{"partId": "body", "type": "text/plain"}],
-        "attachments": [{"blobId": uploaded["blobId"], "type": uploaded["type"], "name": f.filename}]
+        "attachments": [{"blobId": uploaded["blobId"], "type": uploaded["type"], "name": filename}]
     }
 
     client.make_jmap_call(

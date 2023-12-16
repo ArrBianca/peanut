@@ -93,7 +93,7 @@ class TinyJMAPClient:
         """Make a JMAP POST request to the API, returning the response as a
         Python data structure."""
         if is_file:
-            data = call.read()
+            data = call
         else:
             data = json.dumps(call)
 

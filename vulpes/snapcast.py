@@ -9,7 +9,7 @@ from vulpes.connections import uses_db
 
 bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 
-ADD_TEST_EPISODE = """
+ADD_EPISODE = """
     INSERT INTO episode (podcast_id, title, subtitle, episode_uuid, media_url,
                          media_size, media_type, media_duration, pub_date, link)
     VALUES (:podcast_id, :title, :subtitle, :episode_uuid, :media_url, :media_size,
@@ -97,7 +97,7 @@ def snapcast_test(db):
         "media_duration": timedelta(seconds=242).total_seconds(),
         "pub_date": datetime.now(timezone.utc)
     }
-    db.execute(ADD_TEST_EPISODE, data)
+    db.execute(ADD_EPISODE, data)
     db.commit()
     return "ok."
 
@@ -140,7 +140,7 @@ def publish_episode(db, podcast_id):
         "pub_date":         pub_date,
     }
 
-    db.execute(ADD_TEST_EPISODE, data).connection.commit()
+    db.execute(ADD_EPISODE, data).connection.commit()
     return jsonify(success=True)
 
 

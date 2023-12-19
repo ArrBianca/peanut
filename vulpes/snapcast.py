@@ -168,7 +168,7 @@ def get_episode(db, episode_id):
 @authorization_required
 @uses_db
 def patch_episode(db, episode_uuid):
-    """Just give it a dict with key=rowname value=newvalue. let's get naïve up in here"""
+    """Just give it a dict with key=rowname value=newvalue. let's get naïve"""
     json = request.json
 
     rows = 0

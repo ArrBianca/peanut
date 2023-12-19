@@ -9,3 +9,4 @@ peanut.sqlite
 .pylintrc
 
 .DS_Store
+dump.rdb

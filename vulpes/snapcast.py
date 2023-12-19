@@ -17,9 +17,11 @@ ADD_TEST_EPISODE = """
 INSERT_EPISODE = """
     INSERT INTO episode (podcast_id, episode_uuid, title, media_url, media_size, media_type, media_duration, pub_date)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
+DELETE_EPISODE_BY_UUID = """DELETE FROM episode WHERE episode_uuid=?"""
 SELECT_EPISODE_LATEST = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE episode_uuid=?"""
+SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_id=(SELECT id FROM podcast WHERE feed_id=? limit 1)"""
 
 
 def authorization_required(func):
@@ -185,6 +187,7 @@ def patch_episode(db, episode_uuid):
 @authorization_required
 @uses_db
 def delete_episode(db, episode_uuid):
+    result = db.execute(DELETE_EPISODE_BY_UUID, (episode_uuid,))
     db.commit()
 
     if result.rowcount == 0:
@@ -197,6 +200,6 @@ def delete_episode(db, episode_uuid):
 @authorization_required
 @uses_db
 def get_all_episodes(db, podcast_uuid):
-    results = db.execute("select * from episode where podcast_id=(SELECT id from podcast where feed_id=? limit 1)", (podcast_uuid,))
+    results = db.execute(SELECT_PODCAST_EPISODES, (podcast_uuid,))
 
     return jsonify([dict(row) for row in results.fetchall()])

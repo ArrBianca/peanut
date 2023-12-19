@@ -175,6 +175,7 @@ def patch_episode(db, episode_uuid):
 
     rows = 0
     for key in json.keys():
+        # By all accounts, something that should not ever be done
         result = db.execute(f"UPDATE episode SET {key}=? WHERE episode_uuid=?",
                             (json[key], episode_uuid))
         rows += result.rowcount

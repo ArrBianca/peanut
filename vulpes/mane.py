@@ -84,7 +84,7 @@ def send_file(client, filename, file_data):
     :type filename: str
     :type file_data: bytes
     """
-    body = f"""Hi June!
+    body = f"""Hi June,
 
 Someone just uploaded a file to the dropbox!
 

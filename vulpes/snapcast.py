@@ -17,7 +17,7 @@ ADD_TEST_EPISODE = """
 INSERT_EPISODE = """
     INSERT INTO episode (podcast_id, episode_uuid, title, media_url, media_size, media_type, media_duration, pub_date)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
-SELECT_LATEST_EPISODE = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
+SELECT_EPISODE_LATEST = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE episode_uuid=?"""
 
@@ -152,7 +152,7 @@ def get_episode(db, episode_id):
     try:
         episode_id = int(episode_id)
         if episode_id == -1:  # Special case: get the latest episode
-            result = db.execute(SELECT_LATEST_EPISODE).fetchone()
+            result = db.execute(SELECT_EPISODE_LATEST).fetchone()
         else:
             result = db.execute(SELECT_EPISODE_BY_ID, (episode_id,)).fetchone()
     except ValueError:  # Not integer-y, so a UUID.

@@ -29,7 +29,7 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'vulpes.sqlite'),
         CELERY=dict(
-            broker_url="redis://localhost",
+            broker_url="redis+socket:///home/protected/redis.sock",
             result_backend="redis://localhost",
             task_ignore_result=True,
         ),

@@ -43,10 +43,7 @@ def dropbox():
 def upload():
     f = request.files["file"]
     if request.form.get("dropbox"):
-        f.seek(0, 2)
-        size = f.tell()
-        f.seek(0, 0)
-        send_file.delay(size, f.read(), f.filename)
+        send_file.delay(f.filename, f.read())
         return redirect(url_for('mane.dropbox'))
 
     filename = performupload(f)
@@ -80,80 +77,32 @@ def randomname(ext=None):
 
 @shared_task(ignore_result=True)
 @uses_jmap
-def send_file(client, size, f, filename):
-    account_id = client.get_account_id()
-    identity_id = client.get_identity_id()
-    upload_url = client.get_upload_url()
+def send_file(client, filename, file_data):
+    """Email June a file!
 
-    uploaded = client.make_jmap_call(f, is_file=True, url=upload_url)
-
+    :type client: vulpes.jmap.JMAPClient
+    :type filename: str
+    :type file_data: bytes
+    """
     body = f"""Hi June!
 
 Someone just uploaded a file to the dropbox!
 
 Original filename: {filename}
-Filesize: {size / 1024 / 1024:.2F}MB
+Filesize: {len(file_data) / 1024 / 1024:.2F}MB
 
 """
-
-    query_res = client.make_jmap_call(
-        {
-            "using": ["urn:ietf:params:jmap:core", "urn:ietf:params:jmap:mail"],
-            "methodCalls": [
-                [
-                    "Mailbox/query",
-                    {"accountId": account_id, "filter": {"name": "Drafts"}},
-                    "a",
-                ]
-            ],
-        }
+    draft = client.prepare_plaintext_email(
+        "june@peanut.one",
+        "File for ya!",
+        body
     )
-
-    # Pull out the id from the list response, and make sure we got it
-    draft_mailbox_id = query_res["methodResponses"][0][1]["ids"][0]
-    assert len(draft_mailbox_id) > 0
-
-    draft = {
-        "from": [{"email": "peanut@peanut.one"}],
-        "to": [{"email": "june@peanut.one"}],
-        "subject": "File for ya!",
-        "keywords": {"$draft": True},
-        "mailboxIds": {draft_mailbox_id: True},
-        "bodyValues": {"body": {"value": body, "charset": "utf-8"}},
-        "textBody": [{"partId": "body", "type": "text/plain"}],
-        "attachments": [{"blobId": uploaded["blobId"], "type": uploaded["type"], "name": filename}]
-    }
-
-    client.make_jmap_call(
-        {
-            "using": ["urn:ietf:params:jmap:core",
-                      "urn:ietf:params:jmap:mail",
-                      "urn:ietf:params:jmap:submission"
-                      ],
-            "methodCalls": [
-                ["Email/set", {"accountId": account_id, "create": {"draft": draft}}, "a"],
-                [
-                    "EmailSubmission/set",
-                    {
-                        "accountId": account_id,
-                        "onSuccessDestroyEmail": ["#sendIt"],
-                        "create": {
-                            "sendIt": {
-                                "emailId": "#draft",
-                                "identityId": identity_id,
-                            }
-                        },
-                    },
-                    "b",
-                ],
-            ],
-        }
-    )
+    client.attach_file_to_message(draft, file_data, filename)
+    client.send(draft)
 
 
 @uses_db
 def performupload(db, f, customname=None):
-
     if not f:
         return None
 

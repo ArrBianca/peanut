@@ -157,7 +157,7 @@ def get_episode(db, episode_id):
             result = db.execute(SELECT_EPISODE_LATEST).fetchone()
         else:
             result = db.execute(SELECT_EPISODE_BY_ID, (episode_id,)).fetchone()
-    except ValueError:  # Not integer-y, so a UUID.
+    except ValueError:  # Not integer-y, so a UUID probably.
         result = db.execute(SELECT_EPISODE_BY_UUID, (episode_id,)).fetchone()
 
     if result is None:

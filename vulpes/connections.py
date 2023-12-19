@@ -3,7 +3,7 @@ import click
 from functools import wraps
 import sqlite3
 
-from vulpes.tiny_jmap_library import TinyJMAPClient
+from vulpes.jmap import JMAPClient
 
 
 def init_app(app):
@@ -66,10 +66,10 @@ def uses_db(func):
 def uses_jmap(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        client = TinyJMAPClient(
-            hostname=current_app.config["JMAP_HOSTNAME"],
-            username=current_app.config["JMAP_USERNAME"],
-            token=current_app.config["JMAP_TOKEN"],
+        client = JMAPClient(
+            current_app.config["JMAP_HOSTNAME"],
+            current_app.config["JMAP_USERNAME"],
+            current_app.config["JMAP_TOKEN"],
         )
         return func(client, *args, **kwargs)
     return inner

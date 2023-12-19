@@ -185,20 +185,6 @@ def patch_episode(db, episode_uuid):
 @authorization_required
 @uses_db
 def delete_episode(db, episode_uuid):
-    result = db.execute("DELETE FROM episode WHERE episode_uuid=?", (episode_uuid,))
-    db.commit()
-
-    if result.rowcount == 0:
-        return abort(404)
-    else:
-        return jsonify(success=True)
-
-
-@bp.route("/episode/id/<episode_id>", methods=["DELETE"])
-@authorization_required
-@uses_db
-def delete_episode_by_id(db, episode_id):
-    result = db.execute("DELETE FROM episode WHERE id=?", (episode_id,))
     db.commit()
 
     if result.rowcount == 0:

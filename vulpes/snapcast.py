@@ -22,7 +22,7 @@ SELECT_EPISODE_LATEST = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE episode_uuid=?"""
 SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_id=(SELECT id FROM podcast WHERE feed_id=? limit 1)"""  # noqa: E501
-LAST_UPDATED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
+LAST_MODIFIED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
 
 
 def authorization_required(func):
@@ -80,7 +80,7 @@ def generate_feed(db, feed_id):
     response = Response(p.rss_str(), mimetype='text/xml')
     response.headers.add(
         "Last-Modified",
-        datetime.fromisoformat(cast['last_modified']).strftime(LAST_UPDATED_PATTERN)
+        datetime.fromisoformat(cast['last_modified']).strftime(LAST_MODIFIED_PATTERN)
     )
     return response
 
@@ -93,7 +93,7 @@ def feed_head(db, feed_id):
     response = Response()
     response.headers.add(
         "Last-Modified",
-        datetime.fromisoformat(cast['last_modified']).strftime(LAST_UPDATED_PATTERN)
+        datetime.fromisoformat(cast['last_modified']).strftime(LAST_MODIFIED_PATTERN)
     )
     return response
 
@@ -173,7 +173,7 @@ def publish_episode(db, podcast_id):
 
     db.execute(ADD_EPISODE, data)
     db.execute(
-        "UPDATE podcast SET last_updated = ? WHERE id = ?",
+        "UPDATE podcast SET last_modified = ? WHERE id = ?",
         (datetime.now(timezone.utc), podcast_id)
     )
     db.commit()
@@ -217,7 +217,7 @@ def patch_episode(db, episode_uuid):
                             (json[key], episode_uuid))
         rows += result.rowcount
     db.execute(
-        "UPDATE podcast SET last_updated=? WHERE id="
+        "UPDATE podcast SET last_modified=? WHERE id="
         "(SELECT podcast_id from episode where episode_uuid=?)",
         (datetime.now(timezone.utc), episode_uuid)
     )
@@ -232,7 +232,7 @@ def patch_episode(db, episode_uuid):
 def delete_episode(db, episode_uuid):
     result = db.execute(DELETE_EPISODE_BY_UUID, (episode_uuid,))
     db.execute(
-        "UPDATE podcast SET last_updated=? WHERE id="
+        "UPDATE podcast SET last_modified=? WHERE id="
         "(SELECT podcast_id from episode where episode_uuid=?)",
         (datetime.now(timezone.utc), episode_uuid)
     )

@@ -1,4 +1,4 @@
-from flask import current_app, g
+from flask import current_app, g, has_app_context
 import click
 from functools import wraps
 import sqlite3
@@ -63,13 +63,20 @@ def uses_db(func):
     return inner
 
 
-def uses_jmap(func):
-    @wraps(func)
-    def inner(*args, **kwargs):
-        client = JMAPClient(
+def get_jmap():
+    if 'jmap' not in g:
+        g.jmap = JMAPClient(
             current_app.config["JMAP_HOSTNAME"],
             current_app.config["JMAP_USERNAME"],
             current_app.config["JMAP_TOKEN"],
         )
+
+    return g.jmap
+
+
+def uses_jmap(func):
+    @wraps(func)
+    def inner(*args, **kwargs):
+        client = get_jmap()
         return func(client, *args, **kwargs)
     return inner

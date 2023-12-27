@@ -1,12 +1,18 @@
 .idea/
-venv/
+.vscode/
+
 instance/
-*.pyc
+venv/
+
 __pycache__/
+*.pyc
+
+.pylintrc
+peanut.sqlite
 pidfile
 tags
-peanut.sqlite
-.pylintrc
 
 .DS_Store
 dump.rdb
+runfox.sh
+runcelery.sh

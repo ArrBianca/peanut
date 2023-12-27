@@ -1,13 +1,14 @@
 import random
 import string
 import time
+from threading import Thread
 
-from celery import shared_task
-from flask import Blueprint, render_template, request, current_app as app, redirect, url_for, jsonify
+from flask import (Blueprint, render_template, request,
+                   current_app as app, redirect, url_for)
 from werkzeug.utils import secure_filename
 
 from vulpes import get_amazon
-from vulpes.connections import get_db, uses_db, uses_jmap
+from vulpes.connections import get_db, uses_db, get_jmap
 
 bp = Blueprint('mane', __name__)
 
@@ -19,21 +20,6 @@ def mainpage():
     return render_template('mainpage.html')
 
 
-@bp.route('/redis/<a>')
-def redis_ck(a):
-    result = square.delay(int(a))
-    return jsonify({'status': result.id})
-
-
-@shared_task(ignore_result=True)
-def square(v):
-    time.sleep(2)
-    return v * v
-
-
-@bp.route('/redis/done')
-
-
 @bp.route('/dropbox')
 def dropbox():
     return render_template('mainpage.html', dropbox="checked")
@@ -43,7 +29,14 @@ def dropbox():
 def upload():
     f = request.files["file"]
     if request.form.get("dropbox"):
-        send_file.delay(f.filename, f.read())
+        Thread(
+            target=send_file,
+            # Can't use the decorator because it tries to get the jmap global
+            # or the config to create it, from the app context. Doesn't exist
+            # in a thread. We have to pull it out here and pass it along.
+            args=(get_jmap(), f.filename, f.read()),
+            daemon=True
+        ).start()
         return redirect(url_for('mane.dropbox'))
 
     filename = performupload(f)
@@ -75,12 +68,11 @@ def randomname(ext=None):
         return randname
 
 
-@shared_task(ignore_result=True)
-@uses_jmap
-def send_file(client, filename, file_data):
+# @uses_jmap
+def send_file(jmap_client, filename, file_data):
     """Email June a file!
 
-    :type client: vulpes.jmap.JMAPClient
+    :type jmap_client: vulpes.jmap.JMAPClient
     :type filename: str
     :type file_data: bytes
     """
@@ -92,13 +84,16 @@ Original filename: {filename}
 Filesize: {len(file_data) / 1024 / 1024:.2F}MB
 
 """
-    draft = client.prepare_plaintext_email(
+    draft = jmap_client.prepare_plaintext_email(
         "june@peanut.one",
         "File for ya!",
         body
     )
-    client.attach_file_to_message(draft, file_data, filename)
-    client.send(draft)
+    jmap_client.attach_file_to_message(
+        draft,
+        file_data,
+        filename)
+    jmap_client.send(draft)
 
 
 @uses_db

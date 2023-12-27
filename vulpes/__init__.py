@@ -2,22 +2,8 @@ import os
 from urllib.parse import urlparse, urlunparse
 
 import boto3
-from celery import Celery, Task
 from flask import Flask, render_template, g, request, redirect
 from werkzeug.middleware.proxy_fix import ProxyFix
-
-
-def celery_init_app(app: Flask) -> Celery:
-    class FlaskTask(Task):
-        def __call__(self, *args: object, **kwargs: object) -> object:
-            with app.app_context():
-                return self.run(*args, **kwargs)
-
-    celery_app = Celery(app.name, task_cls=FlaskTask)
-    celery_app.config_from_object(app.config["CELERY"])
-    celery_app.set_default()
-    app.extensions["celery"] = celery_app
-    return celery_app
 
 
 def create_app(test_config=None):
@@ -28,11 +14,6 @@ def create_app(test_config=None):
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'vulpes.sqlite'),
-        CELERY=dict(
-            broker_url="redis+socket:///home/protected/redis.sock",
-            result_backend="redis://localhost",
-            task_ignore_result=True,
-        ),
     )
 
     if test_config is None:
@@ -50,8 +31,6 @@ def create_app(test_config=None):
 
     if app.config['SERVER_NAME'] == 'peanut.one':
         app.url_map.default_subdomain = "www"
-
-    celery_init_app(app)
 
     from . import connections
     connections.init_app(app)

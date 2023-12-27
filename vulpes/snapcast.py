@@ -21,6 +21,7 @@ DELETE_EPISODE_BY_UUID = """DELETE FROM episode WHERE episode_uuid=?"""
 SELECT_EPISODE_LATEST = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE episode_uuid=?"""
+SELECT_PODCAST_BY_UUID = """SELECT * FROM podcast WHERE feed_id=?"""
 SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_id=(SELECT id FROM podcast WHERE feed_id=? limit 1)"""  # noqa: E501
 LAST_MODIFIED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
 
@@ -38,19 +39,17 @@ def authorization_required(func):
 @bp.route("/<feed_id>/feed.xml", methods=["GET"])
 @uses_db
 def generate_feed(db, feed_id):
-    print("fedgen")
-    res = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,))
-    cast = res.fetchone()
-    last_modified = datetime.fromisoformat(cast['last_modified'])
+    cast = db.execute(SELECT_PODCAST_BY_UUID, (feed_id,)).fetchone()
 
+    last_modified = datetime.fromisoformat(cast['last_modified'])
     if since := request.if_modified_since:
         print(f"Server requesting update if feed newer than {since}")
-        print(f"Our feed was last changed at {last_modified}")
-        if abs(last_modified - since).total_seconds() < 1:
-            print("No change!")
+        print(f"Our feed was last changed at                {last_modified}")
+        print(f"There is a difference of                    {(last_modified - since)}")
+        # The database column stores microseconds which aren't included in the
+        # request. If they're just about equal we don't update anything.
+        if (last_modified - since).total_seconds() < 1:
             return Response(status=304)
-
-    print("Sending full update")
 
     p = Podcast(
         name=cast['name'],
@@ -90,22 +89,16 @@ def generate_feed(db, feed_id):
         p.add_episode(e)
 
     response = Response(p.rss_str(), mimetype='text/xml')
-    # response.last_modified = datetime.fromisoformat(cast['last_modified'])
     response.last_modified = last_modified
-    # response.headers["Last-Modified"] = datetime.fromisoformat(cast['last_modified']).strftime(LAST_MODIFIED_PATTERN)
     return response
 
 
 @bp.route("/<feed_id>/feed.xml", methods=["HEAD"])
 @uses_db
 def feed_head(db, feed_id):
-    print("hed onli")
-    cast = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,)).fetchone()
+    cast = db.execute(SELECT_PODCAST_BY_UUID, (feed_id,)).fetchone()
     response = Response()
-    response.headers.add(
-        "Last-Modified",
-        datetime.fromisoformat(cast['last_modified']).strftime(LAST_MODIFIED_PATTERN)
-    )
+    response.last_modified = datetime.fromisoformat(cast['last_modified'])
     return response
 
 

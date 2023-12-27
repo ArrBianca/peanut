@@ -41,12 +41,12 @@ def generate_feed(db, feed_id):
     print("fedgen")
     res = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,))
     cast = res.fetchone()
+    last_modified = datetime.fromisoformat(cast['last_modified'])
 
-    if since := request.headers.get("If-Modified-Since"):
-        since = datetime.strptime(since, LAST_MODIFIED_PATTERN)
+    if since := request.if_modified_since:
         print(f"Server requesting update if feed newer than {since}")
-        print(f"Our feed was last changed at {datetime.fromisoformat(cast['last_modified'])}")
-        if since == datetime.fromisoformat(cast['last_modified']):
+        print(f"Our feed was last changed at {last_modified}")
+        if abs(last_modified - since).total_seconds() < 1:
             print("No change!")
             return Response(status=304)
 
@@ -62,7 +62,7 @@ def generate_feed(db, feed_id):
         image=cast['image'],
         authors=[Person(name=cast['author_name'])],
         withhold_from_itunes=bool(cast['withhold_from_itunes']),
-        last_updated=cast['last_modified'],
+        last_updated=last_modified,
     )
 
     res = db.execute("SELECT * FROM episode WHERE podcast_id=?", (cast['id'],))
@@ -90,10 +90,9 @@ def generate_feed(db, feed_id):
         p.add_episode(e)
 
     response = Response(p.rss_str(), mimetype='text/xml')
-    response.headers.add(
-        "Last-Modified",
-        datetime.fromisoformat(cast['last_modified']).strftime(LAST_MODIFIED_PATTERN)
-    )
+    # response.last_modified = datetime.fromisoformat(cast['last_modified'])
+    response.last_modified = last_modified
+    # response.headers["Last-Modified"] = datetime.fromisoformat(cast['last_modified']).strftime(LAST_MODIFIED_PATTERN)
     return response
 
 

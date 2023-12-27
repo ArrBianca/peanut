@@ -9,7 +9,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.wsgi_app = ProxyFix(app.wsgi_app)
-    app.config["CELERY_BROKER_URL"] = "redis://localhost:6379"
 
     app.config.from_mapping(
         SECRET_KEY='dev',

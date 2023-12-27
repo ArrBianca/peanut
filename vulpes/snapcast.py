@@ -41,6 +41,17 @@ def generate_feed(db, feed_id):
     print("fedgen")
     res = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,))
     cast = res.fetchone()
+
+    if since := request.headers.get("If-Modified-Since"):
+        since = datetime.strptime(since, LAST_MODIFIED_PATTERN)
+        print(f"Server requesting update if feed newer than {since}")
+        print(f"Our feed was last changed at {datetime.fromisoformat(cast['last_modified'])}")
+        if since == datetime.fromisoformat(cast['last_modified']):
+            print("No change!")
+            return Response(status=304)
+
+    print("Sending full update")
+
     p = Podcast(
         name=cast['name'],
         description=cast['description'],
@@ -50,7 +61,8 @@ def generate_feed(db, feed_id):
         explicit=cast['explicit'],
         image=cast['image'],
         authors=[Person(name=cast['author_name'])],
-        withhold_from_itunes=bool(cast['withhold_from_itunes'])
+        withhold_from_itunes=bool(cast['withhold_from_itunes']),
+        last_updated=cast['last_modified'],
     )
 
     res = db.execute("SELECT * FROM episode WHERE podcast_id=?", (cast['id'],))
@@ -216,9 +228,8 @@ def patch_episode(db, episode_uuid):
         result = db.execute(f"UPDATE episode SET {key}=? WHERE episode_uuid=?",
                             (json[key], episode_uuid))
         rows += result.rowcount
-    db.execute(
-        "UPDATE podcast SET last_modified=? WHERE id="
-        "(SELECT podcast_id from episode where episode_uuid=?)",
+    r2 = db.execute(
+        "UPDATE podcast SET last_modified=? WHERE id=(SELECT podcast_id from episode where episode_uuid=?)",  # noqa: E501
         (datetime.now(timezone.utc), episode_uuid)
     )
     db.commit()

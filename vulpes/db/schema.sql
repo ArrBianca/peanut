@@ -27,7 +27,7 @@ create table podcast
     category             TEXT,
     withhold_from_itunes integer default 0,
     auth_token           TEXT    not null,
-    lst_updated          TEXT
+    last_modified          TEXT
 );
 
 create table episode

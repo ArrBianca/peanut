@@ -21,7 +21,7 @@ DELETE_EPISODE_BY_UUID = """DELETE FROM episode WHERE episode_uuid=?"""
 SELECT_EPISODE_LATEST = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE episode_uuid=?"""
-SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_id=(SELECT id FROM podcast WHERE feed_id=? limit 1)"""
+SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_id=(SELECT id FROM podcast WHERE feed_id=? limit 1)"""  # noqa: E501
 
 
 def authorization_required(func):
@@ -80,7 +80,7 @@ def generate_feed(db, feed_id):
 
 @bp.route("/snapcast.xml")
 def generate_snapcast():
-    """legacyyyyy"""
+    """shortcut!"""
     return generate_feed('1787bd99-9d00-48c3-b763-5837f8652bd9')
 
 

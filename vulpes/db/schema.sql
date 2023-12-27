@@ -25,7 +25,9 @@ create table podcast
     language             TEXT default 'en-US',
     feed_url             TEXT,
     category             TEXT,
-    withhold_from_itunes integer default 0
+    withhold_from_itunes integer default 0,
+    auth_token           TEXT    not null,
+    lst_updated          TEXT
 );
 
 create table episode
@@ -43,6 +45,7 @@ create table episode
     media_duration INTEGER,
     pub_date       TEXT,
     link           TEXT,
+    episode_art    TEXT,
     FOREIGN KEY (podcast_id) REFERENCES podcast (id),
     constraint title_summary_check
         check ((title NOTNULL) OR (summary NOTNULL))

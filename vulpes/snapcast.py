@@ -2,7 +2,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from uuid import uuid4
 
-from flask import Blueprint, Response, request, jsonify, current_app, abort
+from flask import Blueprint, Response, request, jsonify, current_app, abort, url_for, redirect
 from podgen import Podcast, Episode, Media, Person, Category
 
 from vulpes.connections import uses_db
@@ -22,6 +22,7 @@ SELECT_EPISODE_LATEST = """SELECT * FROM episode ORDER BY id DESC LIMIT 1"""
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE episode_uuid=?"""
 SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_id=(SELECT id FROM podcast WHERE feed_id=? limit 1)"""  # noqa: E501
+LAST_UPDATED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
 
 
 def authorization_required(func):
@@ -34,9 +35,10 @@ def authorization_required(func):
     return inner
 
 
-@bp.route("/<feed_id>/feed.xml")
+@bp.route("/<feed_id>/feed.xml", methods=["GET"])
 @uses_db
 def generate_feed(db, feed_id):
+    print("fedgen")
     res = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,))
     cast = res.fetchone()
     p = Podcast(
@@ -75,13 +77,36 @@ def generate_feed(db, feed_id):
         )
         p.add_episode(e)
 
-    return Response(p.rss_str(), mimetype='text/xml')
+    response = Response(p.rss_str(), mimetype='text/xml')
+    response.headers.add(
+        "Last-Modified",
+        datetime.fromisoformat(cast['last_modified']).strftime(LAST_UPDATED_PATTERN)
+    )
+    return response
+
+
+@bp.route("/<feed_id>/feed.xml", methods=["HEAD"])
+@uses_db
+def feed_head(db, feed_id):
+    print("hed onli")
+    cast = db.execute("SELECT * FROM podcast WHERE feed_id=?", (feed_id,)).fetchone()
+    response = Response()
+    response.headers.add(
+        "Last-Modified",
+        datetime.fromisoformat(cast['last_modified']).strftime(LAST_UPDATED_PATTERN)
+    )
+    return response
 
 
 @bp.route("/snapcast.xml")
 def generate_snapcast():
     """shortcut!"""
-    return generate_feed('1787bd99-9d00-48c3-b763-5837f8652bd9')
+    print(request.method)
+    print(request.headers)
+    if request.method == "HEAD":
+        return feed_head("1787bd99-9d00-48c3-b763-5837f8652bd9")
+    else:
+        return generate_feed('1787bd99-9d00-48c3-b763-5837f8652bd9')
 
 
 @bp.route("/snapcast/add_test")
@@ -90,14 +115,20 @@ def snapcast_test(db):
     data = {
         "podcast_id": 1,
         "title": "Test Episode3",
+        "subtitle": None,
         "episode_uuid": str(uuid4()),
         "media_url": "https://f005.backblazeb2.com/file/jbc-external/test_episode_2.mp3",
         "media_size": 9817898,
         "media_type": "audio/mpeg",
         "media_duration": timedelta(seconds=242).total_seconds(),
-        "pub_date": datetime.now(timezone.utc)
+        "pub_date": datetime.now(timezone.utc),
+        "link": None
     }
     db.execute(ADD_EPISODE, data)
+    db.execute(
+        "UPDATE podcast SET last_modified = ? WHERE id = 1",
+        (datetime.now(timezone.utc),)
+    )
     db.commit()
     return "ok."
 
@@ -140,7 +171,12 @@ def publish_episode(db, podcast_id):
         "pub_date":         pub_date,
     }
 
-    db.execute(ADD_EPISODE, data).connection.commit()
+    db.execute(ADD_EPISODE, data)
+    db.execute(
+        "UPDATE podcast SET last_updated = ? WHERE id = ?",
+        (datetime.now(timezone.utc), podcast_id)
+    )
+    db.commit()
     return jsonify(success=True)
 
 
@@ -180,6 +216,11 @@ def patch_episode(db, episode_uuid):
         result = db.execute(f"UPDATE episode SET {key}=? WHERE episode_uuid=?",
                             (json[key], episode_uuid))
         rows += result.rowcount
+    db.execute(
+        "UPDATE podcast SET last_updated=? WHERE id="
+        "(SELECT podcast_id from episode where episode_uuid=?)",
+        (datetime.now(timezone.utc), episode_uuid)
+    )
     db.commit()
 
     return jsonify(success=True, rows=rows)
@@ -190,6 +231,11 @@ def patch_episode(db, episode_uuid):
 @uses_db
 def delete_episode(db, episode_uuid):
     result = db.execute(DELETE_EPISODE_BY_UUID, (episode_uuid,))
+    db.execute(
+        "UPDATE podcast SET last_updated=? WHERE id="
+        "(SELECT podcast_id from episode where episode_uuid=?)",
+        (datetime.now(timezone.utc), episode_uuid)
+    )
     db.commit()
 
     if result.rowcount == 0:

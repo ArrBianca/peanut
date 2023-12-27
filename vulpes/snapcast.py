@@ -147,9 +147,10 @@ def publish_episode(db, podcast_id):
 @bp.route("/episode/<episode_id>", methods=["GET"])
 @uses_db
 def get_episode(db, episode_id):
-    """
-    Fetches details of a specific episode. Either an integer episode number,
-    a UUID, or -1 which returns the latest episode.
+    """Fetches details of a specific episode.
+
+    Either an integer episode number,a UUID, or `-1` which returns the latest
+    episode.
     """
     try:
         episode_id = int(episode_id)

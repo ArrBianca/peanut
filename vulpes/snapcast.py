@@ -12,7 +12,7 @@ bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 ADD_EPISODE = """
     INSERT INTO episode (podcast_uuid, title, subtitle, uuid, media_url,
                          media_size, media_type, media_duration, pub_date, link)
-    VALUES (:podcast_uuid, :title, :subtitle, :episode_uuid, :media_url,
+    VALUES (:podcast_uuid, :title, :subtitle, :uuid, :media_url,
             :media_size, :media_type, :media_duration, :pub_date, :link)"""
 INSERT_EPISODE = """
     INSERT INTO episode (podcast_uuid, uuid, title, media_url, media_size, media_type, media_duration, pub_date)

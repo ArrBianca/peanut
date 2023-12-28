@@ -17,7 +17,7 @@ ADD_EPISODE = """
 INSERT_EPISODE = """
     INSERT INTO episode (podcast_uuid, uuid, title, media_url, media_size, media_type, media_duration, pub_date)
     VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
-DELETE_EPISODE_BY_UUID = """DELETE FROM episode WHERE podcast_uuid=? AND uuid=? LIMIT 1"""
+DELETE_EPISODE_BY_UUID = """DELETE FROM episode WHERE podcast_uuid=? AND uuid=?"""
 SELECT_EPISODE_LATEST = """SELECT * FROM episode WHERE podcast_uuid=? ORDER BY id DESC LIMIT 1"""
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE podcast_uuid=? AND id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE podcast_uuid=? AND uuid=?"""

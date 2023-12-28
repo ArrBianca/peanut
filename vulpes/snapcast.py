@@ -22,7 +22,7 @@ SELECT_EPISODE_LATEST = """SELECT * FROM episode WHERE podcast_uuid=? ORDER BY i
 SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE podcast_uuid=? AND id=?"""
 SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE podcast_uuid=? AND uuid=?"""
 SELECT_PODCAST_AUTH_KEY = """SELECT auth_token FROM podcast WHERE uuid=?"""
-SELECT_PODCAST_BY_UUID = """SELECT * FROM podcast WHERE feed_id=?"""
+SELECT_PODCAST_BY_UUID = """SELECT * FROM podcast WHERE uuid=?"""
 SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_uuid=?"""  # noqa: E501
 LAST_MODIFIED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
 

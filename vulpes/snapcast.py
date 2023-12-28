@@ -30,7 +30,6 @@ LAST_MODIFIED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
 def authorization_required(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        print(args, kwargs)
         if not request.authorization:
             return abort(401)  # No authentication supplied.
 

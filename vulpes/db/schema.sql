@@ -13,8 +13,7 @@ create table peanut_files
 
 create table podcast
 (
-    id                   integer primary key asc,
-    feed_id              TEXT    not null,
+    uuid                 TEXT    not null,
     name                 TEXT    not null,
     website              TEXT    not null,
     description          TEXT    not null,
@@ -27,14 +26,14 @@ create table podcast
     category             TEXT,
     withhold_from_itunes integer default 0,
     auth_token           TEXT    not null,
-    last_modified          TEXT
+    last_modified        TEXT
 );
 
 create table episode
 (
     id             integer primary key asc,
-    podcast_id     integer,
-    episode_uuid   TEXT,
+    uuid           TEXT,
+    podcast_uuid   TEXT,
     title          TEXT,
     summary        TEXT,
     subtitle       TEXT,
@@ -46,7 +45,7 @@ create table episode
     pub_date       TEXT,
     link           TEXT,
     episode_art    TEXT,
-    FOREIGN KEY (podcast_id) REFERENCES podcast (id),
+    FOREIGN KEY (podcast_uuid) REFERENCES podcast (uuid),
     constraint title_summary_check
         check ((title NOTNULL) OR (summary NOTNULL))
 );

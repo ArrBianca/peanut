@@ -53,15 +53,10 @@ def generate_feed(db, feed_id):
 
     last_modified = datetime.fromisoformat(cast['last_modified'])
     if since := request.if_modified_since:
-        print(f"Server requesting update if feed newer than {since}")
-        print(f"Our feed was last changed at                {last_modified}")
-        print(f"There is a difference of                    {(last_modified - since)}")
         # The database column stores microseconds which aren't included in the
         # request. If they're just about equal we don't update anything.
         if (last_modified - since).total_seconds() < 1:
             return Response(status=304)
-
-    print("We are sending a new copy")
 
     p = Podcast(
         name=cast['name'],
@@ -117,7 +112,6 @@ def feed_head(db, podcast_uuid):
 @bp.route("/snapcast.xml")
 def generate_snapcast():
     """shortcut!"""
-    print("UA:", request.user_agent)
     if request.method == "HEAD":
         return feed_head("1787bd99-9d00-48c3-b763-5837f8652bd9")
     else:

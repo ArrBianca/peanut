@@ -170,7 +170,7 @@ def publish_episode(db, podcast_uuid):
         "title":            json.get('title', "Untitled Episode"),
         "subtitle":         json.get('subtitle'),
 
-        "uuid":     str(uuid4()),
+        "uuid":             str(uuid4()),
         "media_url":        json['url'],
         "media_size":       json['size'],
         "media_type":       json['ftype'],

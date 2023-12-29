@@ -142,8 +142,8 @@ def snapcast_test(db):
 
 
 @bp.route("/<podcast_uuid>/publish", methods=["POST"])
-@authorization_required
 @uses_db
+@authorization_required
 def publish_episode(db, podcast_uuid):
     """
     Required elements in JSON request body:
@@ -234,8 +234,8 @@ def patch_episode(db, podcast_uuid, episode_uuid):
 
 
 @bp.route("/<podcast_uuid>/episode/<episode_uuid>", methods=["DELETE"])
-@authorization_required
 @uses_db
+@authorization_required
 def delete_episode(db, podcast_uuid, episode_uuid):
     result = db.execute(DELETE_EPISODE_BY_UUID, (podcast_uuid, episode_uuid))
     db.execute(
@@ -251,8 +251,8 @@ def delete_episode(db, podcast_uuid, episode_uuid):
 
 
 @bp.route("/<podcast_uuid>/episodes", methods=["GET"])
-@authorization_required
 @uses_db
+@authorization_required
 def get_all_episodes(db, podcast_uuid):
     results = db.execute(SELECT_PODCAST_EPISODES, (podcast_uuid,))
 

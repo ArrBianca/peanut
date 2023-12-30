@@ -34,10 +34,10 @@ def create_app(test_config=None):
     from . import connections
     connections.init_app(app)
 
-    from . import mane, twitch, snapcast
+    from vulpes.blueprints import mane, snapcast, twitch
     app.register_blueprint(mane.bp)
-    app.register_blueprint(twitch.bp)
     app.register_blueprint(snapcast.bp)
+    app.register_blueprint(twitch.bp)
 
     # @app.before_request
     def redirect_nonwww():

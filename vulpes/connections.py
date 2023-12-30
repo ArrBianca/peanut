@@ -1,9 +1,10 @@
-from flask import current_app, g, has_app_context
-import click
-from functools import wraps
 import sqlite3
+from functools import wraps
 
-from vulpes.jmap import JMAPClient
+import click
+from flask import current_app, g
+
+from .jmap import JMAPClient
 
 
 def init_app(app):

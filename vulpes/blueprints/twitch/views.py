@@ -1,8 +1,9 @@
-from flask import Blueprint, render_template, jsonify
-from flask import current_app as app
-import requests
+from flask import current_app as app, render_template, jsonify
+from requests import get
 
-bp = Blueprint('twitch', __name__, url_prefix="/twitch")
+from . import bp
+from .utils import multifind
+
 _prefix = 'https://api.twitch.tv/helix'
 
 
@@ -69,49 +70,36 @@ def userbot(username):
 
 
 def streamer_logo(streamer):
-    return requests.get("{}/users".format(_prefix),
-                        params={'login': streamer},
-                        headers=app.config['_headers']).json()['data'][0]['profile_image_url']
+    return get("{}/users".format(_prefix),
+               params={'login': streamer},
+               headers=app.config['_headers']).json()['data'][0]['profile_image_url']
 
 
 def followed_streams(name):
-    resp = requests.get("{}/users".format(_prefix),
-                        params={'login': name},
-                        headers=app.config['_headers']).json()
+    resp = get("{}/users".format(_prefix),
+               params={'login': name},
+               headers=app.config['_headers']).json()
 
     my_uid = resp['data'][0]['id']
 
     h = app.config['_headers']
     h['Authorization'] = "Bearer {}".format(app.config['TWITCH_USER_TOKEN'])
-    resp = requests.get("{}/channels/followed".format(_prefix),
-                        params={'user_id': my_uid, 'first': 100},
-                        headers=h)
+    resp = get("{}/channels/followed".format(_prefix),
+               params={'user_id': my_uid, 'first': 100},
+               headers=h)
 
     streamer_uids = [c['broadcaster_id'] for c in resp.json()['data']]
 
-    resp = requests.get('{}/streams'.format(_prefix),
-                        params={'user_id': streamer_uids},
-                        headers=app.config['_headers'])
+    resp = get('{}/streams'.format(_prefix),
+               params={'user_id': streamer_uids},
+               headers=app.config['_headers'])
 
     return resp.json()['data']
 
 
 def game_streamers(game: str):
-    resp = requests.get("{}/streams".format(_prefix),
-                        params={'game': game, 'limit': 15},
-                        headers=app.config['_headers'])
+    resp = get("{}/streams".format(_prefix),
+               params={'game': game, 'limit': 15},
+               headers=app.config['_headers'])
 
     return resp.json()['streams']
-
-
-def jsonfind(json, *args):
-    for arg in args:
-        if arg in json:
-            json = json[arg]
-        else:
-            return None
-    return json
-
-
-def multifind(jsonlist, *args):
-    return [jsonfind(json, *args) for json in jsonlist]

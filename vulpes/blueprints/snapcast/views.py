@@ -1,54 +1,19 @@
 from datetime import datetime, timedelta, timezone
-from functools import wraps
 from uuid import uuid4
 
-from flask import Blueprint, Response, request, jsonify, abort
+from flask import request, Response, jsonify, abort
 from podgen import Podcast, Episode, Media, Person, Category
 
-from vulpes.connections import uses_db, get_db
-
-bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
-
-ADD_EPISODE = """
-    INSERT INTO episode (podcast_uuid, title, subtitle, uuid, media_url,
-                         media_size, media_type, media_duration, pub_date, link)
-    VALUES (:podcast_uuid, :title, :subtitle, :uuid, :media_url,
-            :media_size, :media_type, :media_duration, :pub_date, :link)"""
-INSERT_EPISODE = """
-    INSERT INTO episode (podcast_uuid, uuid, title, media_url, media_size, media_type, media_duration, pub_date)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?)"""
-DELETE_EPISODE_BY_UUID = """DELETE FROM episode WHERE podcast_uuid=? AND uuid=?"""
-SELECT_EPISODE_LATEST = """SELECT * FROM episode WHERE podcast_uuid=? ORDER BY id DESC LIMIT 1"""
-SELECT_EPISODE_BY_ID = """SELECT * FROM episode WHERE podcast_uuid=? AND id=?"""
-SELECT_EPISODE_BY_UUID = """SELECT * FROM episode WHERE podcast_uuid=? AND uuid=?"""
-SELECT_PODCAST_AUTH_KEY = """SELECT auth_token FROM podcast WHERE uuid=?"""
-SELECT_PODCAST_BY_UUID = """SELECT * FROM podcast WHERE uuid=?"""
-SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_uuid=?"""  # noqa: E501
-LAST_MODIFIED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
+from . import bp
+from .decorators import authorization_required
+from .sql import *
+from ...connections import uses_db
 
 
-def authorization_required(func):
-    @wraps(func)
-    def inner(*args, **kwargs):
-        if not request.authorization:
-            return abort(401)  # No authentication supplied.
-
-        db = get_db()
-        result = db.execute(SELECT_PODCAST_AUTH_KEY, (kwargs['podcast_uuid'],)).fetchone()
-        if result is None:
-            return abort(404)  # Podcast not found.
-
-        if request.authorization.token == result['auth_token']:
-            return func(*args, **kwargs)
-        else:
-            return abort(401)  # Authentication not correct.
-    return inner
-
-
-@bp.route("/<feed_id>/feed.xml", methods=["GET"])
+@bp.route("/<podcast_uuid>/feed.xml", methods=["GET"])
 @uses_db
-def generate_feed(db, feed_id):
-    cast = db.execute(SELECT_PODCAST_BY_UUID, (feed_id,)).fetchone()
+def generate_feed(db, podcast_uuid):
+    cast = db.execute(SELECT_PODCAST_BY_UUID, (podcast_uuid,)).fetchone()
 
     last_modified = datetime.fromisoformat(cast['last_modified'])
     if since := request.if_modified_since:
@@ -115,30 +80,6 @@ def generate_snapcast():
         return feed_head("1787bd99-9d00-48c3-b763-5837f8652bd9")
     else:
         return generate_feed('1787bd99-9d00-48c3-b763-5837f8652bd9')
-
-
-@bp.route("/snapcast/add_test")
-@uses_db
-def snapcast_test(db):
-    data = {
-        "podcast_id": 1,
-        "title": "Test Episode3",
-        "subtitle": None,
-        "uuid": str(uuid4()),
-        "media_url": "https://f005.backblazeb2.com/file/jbc-external/test_episode_2.mp3",
-        "media_size": 9817898,
-        "media_type": "audio/mpeg",
-        "media_duration": timedelta(seconds=242).total_seconds(),
-        "pub_date": datetime.now(timezone.utc),
-        "link": None
-    }
-    db.execute(ADD_EPISODE, data)
-    db.execute(
-        "UPDATE podcast SET last_modified = ? WHERE id = 1",
-        (datetime.now(timezone.utc),)
-    )
-    db.commit()
-    return "ok."
 
 
 @bp.route("/<podcast_uuid>/publish", methods=["POST"])

@@ -34,7 +34,7 @@ def create_app(test_config=None):
     from . import connections
     connections.init_app(app)
 
-    from vulpes.blueprints import mane, snapcast, twitch
+    from .blueprints import mane, snapcast, twitch
     app.register_blueprint(mane.bp)
     app.register_blueprint(snapcast.bp)
     app.register_blueprint(twitch.bp)

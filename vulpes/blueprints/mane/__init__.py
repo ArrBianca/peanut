@@ -1,18 +1,15 @@
-import random
-import string
 import time
 from threading import Thread
 
-from flask import (Blueprint, render_template, request,
-                   current_app as app, redirect, url_for)
+from flask import Blueprint, render_template, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
-from vulpes import get_amazon
-from vulpes.connections import get_db, uses_db, get_jmap
+from .db import QUERY_SELECT_BY_FILENAME
+from .util import randomname, send_file
+from ... import get_amazon
+from ...connections import uses_db, get_jmap
 
 bp = Blueprint('mane', __name__)
-
-QUERY_SELECT_BY_FILENAME = "SELECT * FROM peanut_files WHERE filename=?"
 
 
 @bp.route('/')
@@ -54,46 +51,6 @@ def uploadbot():
         return "http://f.peanut.one/" + filename
     else:
         return "Error, probably an empty upload field"
-
-
-def randomname(ext=None):
-    c = get_db()
-    randname = ''.join([random.choice(string.ascii_lowercase)
-                       for _ in range(app.config['FILE_NAME_LENGTH'])])
-    if ext is not None:
-        randname = randname + '.' + ext
-    if c.execute(QUERY_SELECT_BY_FILENAME, (randname,)).fetchone() is not None:
-        return randomname(ext)
-    else:
-        return randname
-
-
-# @uses_jmap
-def send_file(jmap_client, filename, file_data):
-    """Email June a file!
-
-    :type jmap_client: vulpes.jmap.JMAPClient
-    :type filename: str
-    :type file_data: bytes
-    """
-    body = f"""Hi June,
-
-Someone just uploaded a file to the dropbox!
-
-Original filename: {filename}
-Filesize: {len(file_data) / 1024 / 1024:.2F}MB
-
-"""
-    draft = jmap_client.prepare_plaintext_email(
-        "june@peanut.one",
-        "File for ya!",
-        body
-    )
-    jmap_client.attach_file_to_message(
-        draft,
-        file_data,
-        filename)
-    jmap_client.send(draft)
 
 
 @uses_db

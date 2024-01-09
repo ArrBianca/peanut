@@ -3,6 +3,7 @@ name = "vulpes"
 version = "0.1.0"
 description = ""
 authors = ["June <june@peanut.one>"]
+readme = "README.md"
 
 [tool.poetry.dependencies]
 python = "^3.10.0"

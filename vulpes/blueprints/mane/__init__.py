@@ -1,13 +1,20 @@
 import time
+from datetime import timezone, datetime
 from threading import Thread
 
 from flask import Blueprint, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import select
+from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
 from .queries import QUERY_SELECT_BY_FILENAME
 from .util import randomname, send_file
 from ... import get_amazon
 from ...connections import uses_db, get_jmap
+from typing import IO
+
+from ...magus import Files
 
 bp = Blueprint('mane', __name__)
 
@@ -54,14 +61,17 @@ def uploadbot():
 
 
 @uses_db
-def performupload(db, f, customname=None):
+def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
     if not f:
         return None
 
     filename = secure_filename(f.filename)
     ext = [x[-1] if len(x) > 1 else None for x in [filename.split('.')]][0]
     if customname is not None:
-        result = db.execute(QUERY_SELECT_BY_FILENAME, (customname,)).fetchone()
+        result = db.session.execute(
+            select(Files)
+            .where(Files.filename == customname)
+        ).fetchone()
         if result is not None:
             return None
         else:
@@ -72,9 +82,15 @@ def performupload(db, f, customname=None):
     f.seek(0, 2)
     size = f.tell()
     f.seek(0, 0)
-    db.execute("INSERT INTO peanut_files VALUES (?, ?, ?, ?)",
-               (newname, size, filename, int(time.time())))
-    db.commit()
+    db.session.add(
+        Files(
+            filename=newname,
+            size=size,
+            origin_name=filename,
+            tstamp=datetime.now(timezone.utc)
+        )
+    )
+    db.session.commit()
     # amazon.upload(newname, f.stream)
     get_amazon().upload_fileobj(
         f, 'f.peanut.one', newname,

@@ -24,11 +24,11 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
 
     # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
     last_modified: datetime = cast.last_modified.replace(tzinfo=timezone.utc)
-    if since := request.if_modified_since:
-        # The database column stores microseconds which aren't included in the
-        # request. If they're just about equal we don't update anything.
-        if (last_modified - since).total_seconds() < 1:
-            return Response(status=304)
+    # The database column stores microseconds which aren't included in the
+    # request. If they're just about equal we don't update anything.
+    if ((request.if_modified_since is not None) and
+       (last_modified - request.if_modified_since).total_seconds() < 1):
+        return Response(status=304)
 
     p = Podcast(
         name=cast.name,

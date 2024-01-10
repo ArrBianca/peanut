@@ -119,7 +119,7 @@ class JMAPClient:
         """Upload an attachment and append its date to the message draft."""
         uploaded = self.file_upload(file_data)
         if 'attachments' not in draft:
-            draft['attachments'] = list()
+            draft['attachments'] = []
         draft["attachments"].append({
             "blobId": uploaded["blobId"],
             "type": uploaded["type"],

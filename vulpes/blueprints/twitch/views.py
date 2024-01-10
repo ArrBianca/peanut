@@ -60,7 +60,7 @@ def userbot(username):
 
     logos = [streamer_logo(s) for s in streamers]
 
-    resp = list()
+    resp = []
     for streamer, game, viewer, logo in zip(streamers, games, viewers, logos):
         resp.append(
             {

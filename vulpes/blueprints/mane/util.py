@@ -22,8 +22,7 @@ def randomname(ext=None):
     ).fetchone()
     if result is not None:
         return randomname(ext)
-    else:
-        return randname
+    return randname
 
 
 # @uses_jmap

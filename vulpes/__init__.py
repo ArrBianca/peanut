@@ -46,18 +46,6 @@ def create_app(test_config=None):
     app.register_blueprint(snapcast.bp)
     app.register_blueprint(twitch.bp)
 
-    # @app.before_request
-    def redirect_nonwww():
-        """Redirect non-www requests to www.
-
-        I think this is not necessary on NFS when configured with
-        """
-        urlparts = urlparse(request.url)
-        if urlparts.netloc == 'peanut.one':
-            urlparts_list = list(urlparts)
-            urlparts_list[1] = 'www.peanut.one'
-            return redirect(urlunparse(urlparts_list), code=301)
-
     @app.errorhandler(404)
     def fower_oh_fower(e):
         return render_template("fower-oh-fower.html"), 404

@@ -22,7 +22,6 @@ def authorization_required(func):
 
         if request.authorization.token == str(result):
             return func(*args, **kwargs)
-        else:
-            return abort(401)  # Authentication not correct.
+        return abort(401)  # Authentication not correct.
 
     return inner

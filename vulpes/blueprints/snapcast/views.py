@@ -92,8 +92,7 @@ def generate_snapcast():
     """shortcut!"""
     if request.method == "HEAD":
         return feed_head(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
-    else:
-        return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
+    return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
 
 
 @bp.route("/<uuid:podcast_uuid>/publish", methods=["POST"])

@@ -45,8 +45,7 @@ def upload():
     filename = performupload(f)
     if filename is not None:
         return render_template("fileuploaded.html", link=filename)
-    else:
-        return "Error, probably an empty upload field"
+    return "Error, probably an empty upload field"
 
 
 @bp.route('/uploadbot', methods=["POST"])
@@ -56,8 +55,7 @@ def uploadbot():
     filename = performupload(f)
     if filename is not None:
         return "http://f.peanut.one/" + filename
-    else:
-        return "Error, probably an empty upload field"
+    return "Error, probably an empty upload field"
 
 
 @uses_db
@@ -75,8 +73,7 @@ def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
         ).fetchone()
         if result is not None:
             return None
-        else:
-            newname = customname + "." + ext
+        newname = customname + "." + ext
     else:
         newname = randomname(ext)
 

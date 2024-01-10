@@ -42,8 +42,7 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
 
     if result is None:
         return abort(404)
-    else:
-        return jsonify(result.as_dict())
+    return jsonify(result.as_dict())
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["PATCH"])
@@ -84,8 +83,7 @@ def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
 
     if result.rowcount == 0:
         return abort(404)
-    else:
-        return jsonify(success=True)
+    return jsonify(success=True)
 
 
 @bp.route("/<uuid:podcast_uuid>/episodes", methods=["GET"])

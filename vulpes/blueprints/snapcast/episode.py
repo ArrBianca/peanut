@@ -30,7 +30,7 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
             result = db.first_or_404(
                 select(Episode)
                 .where(Episode.podcast_uuid == podcast_uuid)
-                .where(Episode.rowid == episode_id)
+                .where(Episode.id == episode_id)
             )
     except ValueError:  # Not integer-y, so a UUID probably.
         result = db.first_or_404(

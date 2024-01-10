@@ -18,7 +18,7 @@ def randomname(ext=None):
 
     result = c.session.execute(
         select(PeanutFile)
-        .where(PeanutFile.filename == randname)
+        .where(PeanutFile.filename == randname),
     ).fetchone()
     if result is not None:
         return randomname(ext)
@@ -45,7 +45,7 @@ Filesize: {len(file_data) / 1024 / 1024:.2F}MB
     draft = jmap_client.prepare_plaintext_email(
         "june@peanut.one",
         "File for ya!",
-        body
+        body,
     )
     jmap_client.attach_file_to_message(
         draft,

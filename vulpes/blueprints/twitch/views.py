@@ -66,8 +66,8 @@ def userbot(username):
                 'streamer': streamer,
                 'game': game,
                 'viewers': viewer,
-                'logo': logo
-            }
+                'logo': logo,
+            },
         )
 
     return jsonify(resp)

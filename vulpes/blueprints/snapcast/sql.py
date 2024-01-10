@@ -12,5 +12,5 @@ def touch_podcast(db: SQLAlchemy, podcast_uuid: UUID):
     db.session.execute(
         update(Podcast)
         .where(Podcast.uuid == podcast_uuid)
-        .values({Podcast.last_modified: datetime.now(timezone.utc)})
+        .values({Podcast.last_modified: datetime.now(timezone.utc)}),
     )

@@ -25,19 +25,19 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
         if episode_id == -1:  # Special case: get the latest episode
             result = db.first_or_404(
                 select(Episode)
-                .order_by(Episode.pub_date.desc())
+                .order_by(Episode.pub_date.desc()),
             )
         else:
             result = db.first_or_404(
                 select(Episode)
                 .where(Episode.podcast_uuid == podcast_uuid)
-                .where(Episode.id == episode_id)
+                .where(Episode.id == episode_id),
             )
     except ValueError:  # Not integer-y, so a UUID probably.
         result = db.first_or_404(
             select(Episode)
             .where(Episode.podcast_uuid == podcast_uuid)
-            .where(Episode.uuid == UUID(episode_id))
+            .where(Episode.uuid == UUID(episode_id)),
         )
 
     if result is None:
@@ -61,7 +61,7 @@ def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
     result = db.session.execute(
         update(Episode)
         .where(Episode.uuid == episode_uuid)
-        .values(json)
+        .values(json),
     )
     touch_podcast(db, podcast_uuid)
     db.session.commit()
@@ -77,7 +77,7 @@ def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
     result = db.session.execute(
         delete(Episode)
         .where(Episode.uuid == episode_uuid)
-        .where(Episode.podcast_uuid == podcast_uuid)
+        .where(Episode.podcast_uuid == podcast_uuid),
     )
     touch_podcast(db, podcast_uuid)
     db.session.commit()
@@ -95,7 +95,7 @@ def get_all_episodes(db: SQLAlchemy, podcast_uuid: UUID):
     """Get all episodes for a podcast."""
     results = db.session.scalars(
         select(Episode)
-        .where(Episode.podcast_uuid == podcast_uuid)
+        .where(Episode.podcast_uuid == podcast_uuid),
     )
 
     return jsonify([episode.as_dict() for episode in results])

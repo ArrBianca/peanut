@@ -20,7 +20,7 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
     """Pull podcast and episode data from the db and generate a podcast xml file."""
     cast: nitre.Podcast = db.first_or_404(
         select(nitre.Podcast)
-        .where(nitre.Podcast.uuid == podcast_uuid)
+        .where(nitre.Podcast.uuid == podcast_uuid),
     )
 
     # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
@@ -46,7 +46,7 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
 
     episodes = db.session.scalars(
         select(nitre.Episode)
-        .where(nitre.Episode.podcast_uuid == podcast_uuid)
+        .where(nitre.Episode.podcast_uuid == podcast_uuid),
     )
     for episode in episodes:
         e = Episode(
@@ -63,7 +63,7 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
             ),
             publication_date=episode.pub_date.replace(tzinfo=timezone.utc),
             link=episode.link,
-            image=episode.episode_art
+            image=episode.episode_art,
         )
         p.add_episode(e)
 
@@ -81,7 +81,7 @@ def feed_head(db: SQLAlchemy, podcast_uuid: UUID):
     """
     last_modified = db.one_or_404(
         select(nitre.Podcast.last_modified)
-        .where(nitre.Podcast.uuid == podcast_uuid)
+        .where(nitre.Podcast.uuid == podcast_uuid),
     )
     response = Response()
     response.last_modified = last_modified.replace(tzinfo=timezone.utc)

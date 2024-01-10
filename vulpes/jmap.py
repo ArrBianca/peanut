@@ -68,15 +68,15 @@ class JMAPClient:
             "methodCalls": [
                 ["Identity/get",
                     {"accountId": self.account_id},
-                 'i']
-            ]
+                 'i'],
+            ],
         })
 
         identity_id = next(
             filter(
                 lambda i: i["email"] == self.username,
                 ident_result["methodResponses"][0][1]["list"],
-            )
+            ),
         )["id"]
 
         self._identity_id = str(identity_id)
@@ -92,8 +92,8 @@ class JMAPClient:
                     {"accountId": self.account_id,
                         "filter": {"name": name},
                      },
-                 "a"]
-            ]
+                 "a"],
+            ],
         })
         # Responses -> Response for Call #0 -> resp[1] is the result dict ->
         #   list of matching ids -> First one
@@ -123,7 +123,7 @@ class JMAPClient:
         draft["attachments"].append({
             "blobId": uploaded["blobId"],
             "type": uploaded["type"],
-            "name": filename
+            "name": filename,
         })
 
     def send(self, message: dict) -> dict:
@@ -135,7 +135,7 @@ class JMAPClient:
             "methodCalls": [
                 ["Email/set",
                     {"accountId": self.account_id,
-                        "create": {"draft": message}
+                        "create": {"draft": message},
                      },
                  "a"],
                 ["EmailSubmission/set",
@@ -143,13 +143,13 @@ class JMAPClient:
                         "create": {
                             "sendIt": {
                                 "emailId": "#draft",
-                                "identityId": self.identity_id
-                            }
+                                "identityId": self.identity_id,
+                            },
                         },
                         "onSuccessDestroyEmail": ["#sendIt"],
                      },
-                 "b"]
-            ]
+                 "b"],
+            ],
         })
 
     def jmap_call(self, call: dict) -> dict:

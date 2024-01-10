@@ -38,7 +38,7 @@ def upload():
             # or the config to create it, from the app context. Doesn't exist
             # in a thread. We have to pull it out here and pass it along.
             args=(get_jmap(), f.filename, f.read()),
-            daemon=True
+            daemon=True,
         ).start()
         return redirect(url_for('mane.dropbox'))
 
@@ -71,7 +71,7 @@ def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
     if customname is not None:
         result = db.session.execute(
             select(PeanutFile)
-            .where(PeanutFile.filename == customname)
+            .where(PeanutFile.filename == customname),
         ).fetchone()
         if result is not None:
             return None
@@ -88,8 +88,8 @@ def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
             filename=newname,
             size=size,
             origin_name=filename,
-            tstamp=datetime.now(timezone.utc)
-        )
+            tstamp=datetime.now(timezone.utc),
+        ),
     )
     db.session.commit()
     # amazon.upload(newname, f.stream)

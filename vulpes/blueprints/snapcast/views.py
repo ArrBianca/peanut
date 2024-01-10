@@ -1,21 +1,29 @@
 from datetime import datetime, timedelta, timezone
+from uuid import UUID
 from uuid import uuid4
 
 from flask import request, Response, jsonify
+from flask_sqlalchemy import SQLAlchemy
 from podgen import Podcast, Episode, Media, Person, Category
+from sqlalchemy import select
 
 from . import bp
 from .decorators import authorization_required
-from .sql import *
+from ... import magus
 from ...connections import uses_db
 
 
-@bp.route("/<podcast_uuid>/feed.xml", methods=["GET"])
+@bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 @uses_db
-def generate_feed(db, podcast_uuid):
-    cast = db.execute(SELECT_PODCAST_BY_UUID, (podcast_uuid,)).fetchone()
+def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
+    cast = db.first_or_404(
+        select(magus.Podcast)
+        .where(magus.Podcast.uuid == podcast_uuid)
+    )
+    # cast = db.execute(SELECT_PODCAST_BY_UUID, (podcast_uuid,)).fetchone()
 
-    last_modified = datetime.fromisoformat(cast['last_modified'])
+    # The caveat to sqlalchemy and sqlite: It stores datetimes as naive
+    last_modified: datetime = cast['last_modified'].replace(tzinfo=timezone.utc)
     if since := request.if_modified_since:
         # The database column stores microseconds which aren't included in the
         # request. If they're just about equal we don't update anything.
@@ -35,14 +43,18 @@ def generate_feed(db, podcast_uuid):
         last_updated=last_modified,
     )
 
-    res = db.execute("SELECT * FROM episode WHERE podcast_uuid=?", (cast['uuid'],))
-    episodes = res.fetchall()
+    episodes = db.session.execute(
+        select(magus.Episode)
+        .where(magus.Episode.podcast_uuid == podcast_uuid)
+    )
+    # episodes = res.fetchall()
     for episode in episodes:
-        if media_duration := episode['media_duration']:
-            media_duration = timedelta(seconds=media_duration)
+        episode: magus.Episode = episode[0]
+
+        pub_date = episode.pub_date.replace(tzinfo=timezone.utc)
 
         e = Episode(
-            id=episode['uuid'],
+            id=str(episode.uuid),
             title=episode['title'],
             summary=episode['summary'],
             subtitle=episode['subtitle'],
@@ -51,9 +63,9 @@ def generate_feed(db, podcast_uuid):
                 episode['media_url'],
                 size=episode['media_size'],
                 type=episode['media_type'],
-                duration=media_duration,
+                duration=episode.media_duration,
             ),
-            publication_date=datetime.fromisoformat(episode['pub_date']),
+            publication_date=pub_date,
             link=episode['link'],
             image=episode['episode_art']
         )
@@ -67,9 +79,12 @@ def generate_feed(db, podcast_uuid):
 @bp.route("/<podcast_uuid>/feed.xml", methods=["HEAD"])
 @uses_db
 def feed_head(db, podcast_uuid):
-    cast = db.execute(SELECT_PODCAST_BY_UUID, (podcast_uuid,)).fetchone()
+    last_modified = db.one_or_404(
+        select(magus.Podcast.last_modified)
+        .where(magus.Podcast.uuid == podcast_uuid)
+    )
     response = Response()
-    response.last_modified = datetime.fromisoformat(cast['last_modified'])
+    response.last_modified = last_modified.replace(tzinfo=timezone.utc)
     return response
 
 
@@ -77,9 +92,9 @@ def feed_head(db, podcast_uuid):
 def generate_snapcast():
     """shortcut!"""
     if request.method == "HEAD":
-        return feed_head("1787bd99-9d00-48c3-b763-5837f8652bd9")
+        return feed_head(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
     else:
-        return generate_feed('1787bd99-9d00-48c3-b763-5837f8652bd9')
+        return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
 
 
 @bp.route("/<podcast_uuid>/publish", methods=["POST"])
@@ -120,10 +135,11 @@ def publish_episode(db, podcast_uuid):
         "pub_date":         pub_date,
     }
 
-    db.execute(ADD_EPISODE, data)
-    db.execute(
-        "UPDATE podcast SET last_modified = ? WHERE uuid = ?",
-        (datetime.now(timezone.utc), podcast_uuid)
-    )
-    db.commit()
+    db.session.add(magus.Episode(**data))
+    # db.execute(ADD_EPISODE, data)
+    # db.execute(
+    #     "UPDATE podcast SET last_modified = ? WHERE uuid = ?",
+    #     (datetime.now(timezone.utc), podcast_uuid)
+    # )
+    # db.commit()
     return jsonify(success=True)

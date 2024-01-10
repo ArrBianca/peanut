@@ -1,9 +1,12 @@
 from functools import wraps
 
 from flask import abort, request
+from sqlalchemy import select
 
 from .sql import SELECT_PODCAST_AUTH_KEY
 from ...connections import get_db
+from ...magus import Podcast
+from uuid import UUID
 
 
 def authorization_required(func):
@@ -13,11 +16,14 @@ def authorization_required(func):
             return abort(401)  # No authentication supplied.
 
         db = get_db()
-        result = db.execute(SELECT_PODCAST_AUTH_KEY, (kwargs['podcast_uuid'],)).fetchone()
+        result = db.first_or_404(select(Podcast.auth_token).where(Podcast.uuid == UUID(kwargs['podcast_uuid'])))
+        # result = db.execute(SELECT_PODCAST_AUTH_KEY, (kwargs['podcast_uuid'],)).fetchone()
+        print(result)
+        print(request.authorization.token)
         if result is None:
             return abort(404)  # Podcast not found.
 
-        if request.authorization.token == result['auth_token']:
+        if request.authorization.token == str(result):
             return func(*args, **kwargs)
         else:
             return abort(401)  # Authentication not correct.

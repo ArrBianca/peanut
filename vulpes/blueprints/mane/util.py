@@ -3,7 +3,7 @@ from random import choice
 
 from flask import current_app as app
 
-from .db import QUERY_SELECT_BY_FILENAME
+from .queries import QUERY_SELECT_BY_FILENAME
 from ...connections import get_db
 
 

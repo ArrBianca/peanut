@@ -4,7 +4,7 @@ from threading import Thread
 from flask import Blueprint, render_template, request, redirect, url_for
 from werkzeug.utils import secure_filename
 
-from .db import QUERY_SELECT_BY_FILENAME
+from .queries import QUERY_SELECT_BY_FILENAME
 from .util import randomname, send_file
 from ... import get_amazon
 from ...connections import uses_db, get_jmap

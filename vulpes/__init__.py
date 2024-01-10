@@ -1,18 +1,59 @@
 import os
+from datetime import datetime, timedelta, timezone
+from typing import Optional
 from urllib.parse import urlparse, urlunparse
+from uuid import UUID
 
 import boto3
-from flask import Flask, render_template, g, request, redirect
+from flask import Flask, render_template, g, request, redirect, json
+from flask.json.provider import JSONProvider
+from flask_sqlalchemy import SQLAlchemy
+from flask_sqlalchemy.model import Model
+from sqlalchemy import ForeignKey, text
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from werkzeug.middleware.proxy_fix import ProxyFix
+from flask.json.provider import DefaultJSONProvider
+
+
+class Base(DeclarativeBase):
+    pass
+
+
+db = SQLAlchemy(model_class=Base)
+
+
+class CustomJsonProvider(DefaultJSONProvider):
+    def dumps(self, obj, **kw):
+        """
+        Define how to serialize objects that aren't natively serializable by json.dumps.
+
+        Returns:
+        - A dictionary if the object is a FireO model
+        - A list of dictionaries if the object is a FireO QueryIterator or list of models
+        - Datetime objects are serialized to iso strings
+        - All other clases are delegated back to DefaultJSONProvider
+        """
+
+        if isinstance(obj, datetime):
+            obj = obj.replace(tzinfo=timezone.utc).isoformat()
+        elif isinstance(obj, timedelta):
+            obj = obj.total_seconds()
+
+        return super().dumps(obj, **kw)  # Delegate to the default dumps
 
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.wsgi_app = ProxyFix(app.wsgi_app)
 
+    app.json_provider_class = CustomJsonProvider
+    app.json = CustomJsonProvider(app)
+
     app.config.from_mapping(
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'vulpes.sqlite'),
+        SQLALCHEMY_DATABASE_URI="sqlite:///../instance/neo_vulpes.sqlite"
+
     )
 
     if test_config is None:
@@ -30,6 +71,10 @@ def create_app(test_config=None):
 
     if app.config['SERVER_NAME'] == 'peanut.one':
         app.url_map.default_subdomain = "www"
+
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
     from . import connections
     connections.init_app(app)

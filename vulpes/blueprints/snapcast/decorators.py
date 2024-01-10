@@ -10,7 +10,6 @@ from ...magus import Podcast
 def authorization_required(func):
     @wraps(func)
     def inner(*args, **kwargs):
-        print(args, kwargs)
         if not request.authorization:
             return abort(401)  # No authentication supplied.
 
@@ -19,10 +18,6 @@ def authorization_required(func):
             select(Podcast.auth_token)
             .where(Podcast.uuid == kwargs['podcast_uuid'])
         )
-        print(result)
-        print(request.authorization.token)
-        if result is None:
-            return abort(404)  # Podcast not found.
 
         if request.authorization.token == str(result):
             return func(*args, **kwargs)

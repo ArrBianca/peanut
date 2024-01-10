@@ -22,7 +22,7 @@ class DatetimeFormattingModel:
         for col in self.__table__.columns:
             val = getattr(self, col.name)
             if isinstance(val, timedelta):
-                d[col.name] = val.total_seconds()
+                d[col.name] = int(val.total_seconds())
             elif isinstance(val, datetime):
                 d[col.name] = val.replace(tzinfo=timezone.utc).isoformat()
             else:

@@ -10,7 +10,7 @@ from werkzeug.utils import secure_filename
 from .util import randomname, send_file
 from ... import get_amazon
 from ...connections import uses_db, get_jmap
-from ...nitre import Files
+from ...nitre import PeanutFile
 
 bp = Blueprint('mane', __name__)
 
@@ -65,8 +65,8 @@ def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
     ext = [x[-1] if len(x) > 1 else None for x in [filename.split('.')]][0]
     if customname is not None:
         result = db.session.execute(
-            select(Files)
-            .where(Files.filename == customname)
+            select(PeanutFile)
+            .where(PeanutFile.filename == customname)
         ).fetchone()
         if result is not None:
             return None
@@ -79,7 +79,7 @@ def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
     size = f.tell()
     f.seek(0, 0)
     db.session.add(
-        Files(
+        PeanutFile(
             filename=newname,
             size=size,
             origin_name=filename,

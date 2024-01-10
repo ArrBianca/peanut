@@ -123,9 +123,11 @@ def publish_episode(db: SQLAlchemy, podcast_uuid: UUID):
         "title":            json.get('title', "Untitled Episode"),
         "subtitle":         json.get('subtitle'),
 
+        "uuid":             uuid4(),
         "media_url":        json['url'],
         "media_size":       json['size'],
         "media_type":       json['ftype'],
+        "media_duration":   timedelta(seconds=json.get('duration')),
 
         "link":             json.get('link'),
         "pub_date":         pub_date,

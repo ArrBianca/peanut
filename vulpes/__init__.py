@@ -1,14 +1,15 @@
+import contextlib
 import os
-from urllib.parse import urlparse, urlunparse
 
 import boto3
-from flask import Flask, render_template, g, request, redirect
+from flask import Flask, g, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .nitre import db
 
 
 def create_app(test_config=None):
+    """Build the app object."""
     app = Flask(__name__, instance_relative_config=True)
     app.wsgi_app = ProxyFix(app.wsgi_app)
 
@@ -25,10 +26,8 @@ def create_app(test_config=None):
         app.config.from_mapping(test_config)
 
     # ensure the instance folder exists
-    try:
+    with contextlib.suppress(OSError):
         os.makedirs(app.instance_path)
-    except OSError:
-        pass
 
     if app.config['SERVER_NAME'] == 'peanut.one':
         app.url_map.default_subdomain = "www"
@@ -45,16 +44,6 @@ def create_app(test_config=None):
     app.register_blueprint(snapcast.bp)
     app.register_blueprint(twitch.bp)
 
-    # @app.before_request
-    def redirect_nonwww():
-        """Redirect non-www requests to www.
-        I think this is not necessary on NFS when configured with"""
-        urlparts = urlparse(request.url)
-        if urlparts.netloc == 'peanut.one':
-            urlparts_list = list(urlparts)
-            urlparts_list[1] = 'www.peanut.one'
-            return redirect(urlunparse(urlparts_list), code=301)
-
     @app.errorhandler(404)
     def fower_oh_fower(e):
         return render_template("fower-oh-fower.html"), 404
@@ -63,6 +52,7 @@ def create_app(test_config=None):
 
 
 def get_amazon():
+    """Get an s3 connection."""
     if 's3' not in g:
         g.s3 = boto3.client('s3')
     return g.s3

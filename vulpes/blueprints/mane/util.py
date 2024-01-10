@@ -9,6 +9,7 @@ from ...nitre import PeanutFile
 
 
 def randomname(ext=None):
+    """Generate a new unique random short name for a file."""
     c = get_db()
     randname = ''.join([choice(string.ascii_lowercase)
                        for _ in range(app.config['FILE_NAME_LENGTH'])])
@@ -17,12 +18,11 @@ def randomname(ext=None):
 
     result = c.session.execute(
         select(PeanutFile)
-        .where(PeanutFile.filename == randname)
+        .where(PeanutFile.filename == randname),
     ).fetchone()
     if result is not None:
         return randomname(ext)
-    else:
-        return randname
+    return randname
 
 
 # @uses_jmap
@@ -44,7 +44,7 @@ Filesize: {len(file_data) / 1024 / 1024:.2F}MB
     draft = jmap_client.prepare_plaintext_email(
         "june@peanut.one",
         "File for ya!",
-        body
+        body,
     )
     jmap_client.attach_file_to_message(
         draft,

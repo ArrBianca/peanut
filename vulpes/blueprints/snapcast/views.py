@@ -1,34 +1,34 @@
-from datetime import datetime, timezone, timedelta
-from uuid import UUID
-from uuid import uuid4
+from datetime import datetime, timedelta, timezone
+from uuid import UUID, uuid4
 
-from flask import request, Response, jsonify
+from flask import Response, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from podgen import Podcast, Episode, Media, Person, Category
+from podgen import Category, Episode, Media, Person, Podcast
 from sqlalchemy import select
 
+from ... import nitre
+from ...connections import uses_db
 from . import bp
 from .decorators import authorization_required
 from .sql import touch_podcast
-from ... import nitre
-from ...connections import uses_db
 
 
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 @uses_db
 def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
+    """Pull podcast and episode data from the db and generate a podcast xml file."""
     cast: nitre.Podcast = db.first_or_404(
         select(nitre.Podcast)
-        .where(nitre.Podcast.uuid == podcast_uuid)
+        .where(nitre.Podcast.uuid == podcast_uuid),
     )
 
     # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
     last_modified: datetime = cast.last_modified.replace(tzinfo=timezone.utc)
-    if since := request.if_modified_since:
-        # The database column stores microseconds which aren't included in the
-        # request. If they're just about equal we don't update anything.
-        if (last_modified - since).total_seconds() < 1:
-            return Response(status=304)
+    # The database column stores microseconds which aren't included in the
+    # request. If they're just about equal we don't update anything.
+    if ((request.if_modified_since is not None) and
+       (last_modified - request.if_modified_since).total_seconds() < 1):
+        return Response(status=304)
 
     p = Podcast(
         name=cast.name,
@@ -45,11 +45,9 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
 
     episodes = db.session.scalars(
         select(nitre.Episode)
-        .where(nitre.Episode.podcast_uuid == podcast_uuid)
+        .where(nitre.Episode.podcast_uuid == podcast_uuid),
     )
     for episode in episodes:
-        # Row object is a 2-tuple with the object in [0]. idk why.
-
         e = Episode(
             id=str(episode.uuid),
             title=episode.title,
@@ -64,7 +62,7 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
             ),
             publication_date=episode.pub_date.replace(tzinfo=timezone.utc),
             link=episode.link,
-            image=episode.episode_art
+            image=episode.episode_art,
         )
         p.add_episode(e)
 
@@ -76,9 +74,13 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["HEAD"])
 @uses_db
 def feed_head(db: SQLAlchemy, podcast_uuid: UUID):
+    """Set headers for a HEAD request to a feed.
+
+    Fill `Last-Modified` to save on data transfer.
+    """
     last_modified = db.one_or_404(
         select(nitre.Podcast.last_modified)
-        .where(nitre.Podcast.uuid == podcast_uuid)
+        .where(nitre.Podcast.uuid == podcast_uuid),
     )
     response = Response()
     response.last_modified = last_modified.replace(tzinfo=timezone.utc)
@@ -90,15 +92,15 @@ def generate_snapcast():
     """shortcut!"""
     if request.method == "HEAD":
         return feed_head(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
-    else:
-        return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
+    return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
 
 
 @bp.route("/<uuid:podcast_uuid>/publish", methods=["POST"])
 @uses_db
 @authorization_required
 def publish_episode(db: SQLAlchemy, podcast_uuid: UUID):
-    """
+    """Add a new episode to a podcast.
+
     Required elements in JSON request body:
         url:       str,
         size:      int,

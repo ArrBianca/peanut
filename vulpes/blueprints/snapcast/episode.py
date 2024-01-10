@@ -1,21 +1,21 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from flask import abort, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 
+from ...connections import uses_db
+from ...nitre import Episode
 from . import bp
 from .decorators import authorization_required
 from .sql import touch_podcast
-from ...connections import uses_db
-from ...nitre import Episode
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])
 @uses_db
 def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
-    """Fetches details of a specific episode.
+    """Fetch details of a specific episode.
 
     Either an integer episode number,a UUID, or `-1` which returns the latest
     episode.
@@ -25,32 +25,31 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
         if episode_id == -1:  # Special case: get the latest episode
             result = db.first_or_404(
                 select(Episode)
-                .order_by(Episode.pub_date.desc())
+                .order_by(Episode.pub_date.desc()),
             )
         else:
             result = db.first_or_404(
                 select(Episode)
                 .where(Episode.podcast_uuid == podcast_uuid)
-                .where(Episode.id == episode_id)
+                .where(Episode.id == episode_id),
             )
     except ValueError:  # Not integer-y, so a UUID probably.
         result = db.first_or_404(
             select(Episode)
             .where(Episode.podcast_uuid == podcast_uuid)
-            .where(Episode.uuid == UUID(episode_id))
+            .where(Episode.uuid == UUID(episode_id)),
         )
 
     if result is None:
         return abort(404)
-    else:
-        return jsonify(result.as_dict())
+    return jsonify(result.as_dict())
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["PATCH"])
 @uses_db
 @authorization_required
 def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
-    """Just give it a dict with key=rowname value=newvalue. let's get naïve"""
+    """Just give it a dict with key=rowname value=newvalue. let's get naïve."""
     json = request.json
 
     if 'media_duration' in json:
@@ -61,7 +60,7 @@ def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
     result = db.session.execute(
         update(Episode)
         .where(Episode.uuid == episode_uuid)
-        .values(json)
+        .values(json),
     )
     touch_podcast(db, podcast_uuid)
     db.session.commit()
@@ -73,27 +72,28 @@ def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
 @uses_db
 @authorization_required
 def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
+    """Delete an episode."""
     result = db.session.execute(
         delete(Episode)
         .where(Episode.uuid == episode_uuid)
-        .where(Episode.podcast_uuid == podcast_uuid)
+        .where(Episode.podcast_uuid == podcast_uuid),
     )
     touch_podcast(db, podcast_uuid)
     db.session.commit()
 
     if result.rowcount == 0:
         return abort(404)
-    else:
-        return jsonify(success=True)
+    return jsonify(success=True)
 
 
 @bp.route("/<uuid:podcast_uuid>/episodes", methods=["GET"])
 @uses_db
 @authorization_required
 def get_all_episodes(db: SQLAlchemy, podcast_uuid: UUID):
+    """Get all episodes for a podcast."""
     results = db.session.scalars(
         select(Episode)
-        .where(Episode.podcast_uuid == podcast_uuid)
+        .where(Episode.podcast_uuid == podcast_uuid),
     )
 
     return jsonify([episode.as_dict() for episode in results])

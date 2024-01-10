@@ -8,6 +8,7 @@ from ...nitre import Podcast
 
 
 def authorization_required(func):
+    """Check Bearer token of incoming requests, based on the podcast being accessed."""
     @wraps(func)
     def inner(*args, **kwargs):
         if not request.authorization:

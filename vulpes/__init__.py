@@ -9,6 +9,7 @@ from .nitre import db
 
 
 def create_app(test_config=None):
+    """Build the app object."""
     app = Flask(__name__, instance_relative_config=True)
     app.wsgi_app = ProxyFix(app.wsgi_app)
 
@@ -48,7 +49,9 @@ def create_app(test_config=None):
     # @app.before_request
     def redirect_nonwww():
         """Redirect non-www requests to www.
-        I think this is not necessary on NFS when configured with"""
+
+        I think this is not necessary on NFS when configured with
+        """
         urlparts = urlparse(request.url)
         if urlparts.netloc == 'peanut.one':
             urlparts_list = list(urlparts)
@@ -63,6 +66,7 @@ def create_app(test_config=None):
 
 
 def get_amazon():
+    """Get an s3 connection."""
     if 's3' not in g:
         g.s3 = boto3.client('s3')
     return g.s3

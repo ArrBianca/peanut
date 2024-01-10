@@ -8,6 +8,8 @@ from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
 
 class Base(DeclarativeBase):
+    """The DeclarativeBase you have to use in sqlalchemy."""
+
     pass
 
 
@@ -15,9 +17,15 @@ db = SQLAlchemy(model_class=Base)
 
 
 class DatetimeFormattingModel:
+    """Parent class that allows a Model to turn into a jsonify-able dictionary."""
+
     __table__ = None
 
     def as_dict(self):
+        """Create a `dict` representation off the model.
+
+        Replaces `datetime` and `timedelta` types with string representations, safe to send.
+        """
         d = {}
         for col in self.__table__.columns:
             val = getattr(self, col.name)
@@ -31,6 +39,8 @@ class DatetimeFormattingModel:
 
 
 class Podcast(DatetimeFormattingModel, db.Model):
+    """ORM Mapping for the database's `podcast` table."""
+
     __tablename__ = 'podcast'
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -56,6 +66,8 @@ class Podcast(DatetimeFormattingModel, db.Model):
 
 
 class Episode(DatetimeFormattingModel, db.Model):
+    """ORM Mapping for the database's `episode` table."""
+
     __tablename__ = 'episode'
 
     id: Mapped[int] = mapped_column(primary_key=True)
@@ -84,6 +96,8 @@ class Episode(DatetimeFormattingModel, db.Model):
 
 
 class PeanutFile(db.Model):
+    """ORM Mapping for the database's `peanut_file` table."""
+
     __tablename__ = 'peanut_file'
 
     id: Mapped[int] = mapped_column(primary_key=True)

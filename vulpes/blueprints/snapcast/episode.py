@@ -15,7 +15,7 @@ from ...nitre import Episode
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])
 @uses_db
 def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
-    """Fetches details of a specific episode.
+    """Fetch details of a specific episode.
 
     Either an integer episode number,a UUID, or `-1` which returns the latest
     episode.
@@ -50,7 +50,7 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
 @uses_db
 @authorization_required
 def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
-    """Just give it a dict with key=rowname value=newvalue. let's get naïve"""
+    """Just give it a dict with key=rowname value=newvalue. let's get naïve."""
     json = request.json
 
     if 'media_duration' in json:
@@ -73,6 +73,7 @@ def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
 @uses_db
 @authorization_required
 def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
+    """Delete an episode."""
     result = db.session.execute(
         delete(Episode)
         .where(Episode.uuid == episode_uuid)
@@ -91,6 +92,7 @@ def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
 @uses_db
 @authorization_required
 def get_all_episodes(db: SQLAlchemy, podcast_uuid: UUID):
+    """Get all episodes for a podcast."""
     results = db.session.scalars(
         select(Episode)
         .where(Episode.podcast_uuid == podcast_uuid)

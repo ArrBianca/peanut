@@ -9,6 +9,7 @@ _prefix = 'https://api.twitch.tv/helix'
 
 @bp.before_app_request
 def a():
+    """Add the twitch authorization to all the requests made in the views below."""
     app.config['_headers'] = {'Accept': 'application/vnd.twitchtv.v5+json',
                               'Client-ID': app.config['TWITCH_CLIENT_ID'],
                               'Authorization': "Bearer {}".format(app.config['TWITCH_TOKEN'])}
@@ -16,6 +17,7 @@ def a():
 
 @bp.route("/game/<game>")
 def names(game):
+    """Display a list of the top streamers for a particular game."""
     res = game_streamers(game)
 
     streamers = multifind(res, "channel", "display_name")
@@ -31,6 +33,7 @@ def names(game):
 
 @bp.route("/user/<username>")
 def following(username):
+    """Display a list of all active streams from a user's following list."""
     res = followed_streams(username)
 
     streamers = multifind(res, "user_name")
@@ -47,6 +50,7 @@ def following(username):
 
 @bp.route("/user/<username>/simple")
 def userbot(username):
+    """Return the same data as above, but as a JSON object for automated parsing."""
     res = followed_streams(username)
 
     streamers = multifind(res, "user_name")
@@ -70,12 +74,14 @@ def userbot(username):
 
 
 def streamer_logo(streamer):
+    """Get the profile picture of a streamer."""
     return get("{}/users".format(_prefix),
                params={'login': streamer},
                headers=app.config['_headers']).json()['data'][0]['profile_image_url']
 
 
 def followed_streams(name):
+    """Get the stream info for live channels followed by the given user."""
     resp = get("{}/users".format(_prefix),
                params={'login': name},
                headers=app.config['_headers']).json()
@@ -98,6 +104,7 @@ def followed_streams(name):
 
 
 def game_streamers(game: str):
+    """Get the 15 highest viewcount streams of a given game."""
     resp = get("{}/streams".format(_prefix),
                params={'game': game, 'limit': 15},
                headers=app.config['_headers'])

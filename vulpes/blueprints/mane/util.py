@@ -9,6 +9,7 @@ from ...nitre import PeanutFile
 
 
 def randomname(ext=None):
+    """Generate a new unique random short name for a file."""
     c = get_db()
     randname = ''.join([choice(string.ascii_lowercase)
                        for _ in range(app.config['FILE_NAME_LENGTH'])])

@@ -8,6 +8,7 @@ from ...nitre import Podcast
 
 
 def touch_podcast(db: SQLAlchemy, podcast_uuid: UUID):
+    """Update the last_modified field for a podcast. Called on cache-invalidating requests."""
     db.session.execute(
         update(Podcast)
         .where(Podcast.uuid == podcast_uuid)

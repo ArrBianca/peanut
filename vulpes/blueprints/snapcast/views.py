@@ -17,6 +17,7 @@ from ...connections import uses_db
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 @uses_db
 def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
+    """Pull podcast and episode data from the db and generate a podcast xml file."""
     cast: nitre.Podcast = db.first_or_404(
         select(nitre.Podcast)
         .where(nitre.Podcast.uuid == podcast_uuid)
@@ -48,8 +49,6 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
         .where(nitre.Episode.podcast_uuid == podcast_uuid)
     )
     for episode in episodes:
-        # Row object is a 2-tuple with the object in [0]. idk why.
-
         e = Episode(
             id=str(episode.uuid),
             title=episode.title,
@@ -76,6 +75,10 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["HEAD"])
 @uses_db
 def feed_head(db: SQLAlchemy, podcast_uuid: UUID):
+    """Set headers for a HEAD request to a feed.
+
+    Fill `Last-Modified` to save on data transfer.
+    """
     last_modified = db.one_or_404(
         select(nitre.Podcast.last_modified)
         .where(nitre.Podcast.uuid == podcast_uuid)
@@ -98,7 +101,8 @@ def generate_snapcast():
 @uses_db
 @authorization_required
 def publish_episode(db: SQLAlchemy, podcast_uuid: UUID):
-    """
+    """Add a new episode to a podcast.
+
     Required elements in JSON request body:
         url:       str,
         size:      int,

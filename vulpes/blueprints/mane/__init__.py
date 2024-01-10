@@ -17,16 +17,19 @@ bp = Blueprint('mane', __name__)
 
 @bp.route('/')
 def mainpage():
+    """Get the site's homepage."""
     return render_template('mainpage.html')
 
 
 @bp.route('/dropbox')
 def dropbox():
+    """Get the site's homepage, but with the "Dropbox" checkbox checked."""
     return render_template('mainpage.html', dropbox="checked")
 
 
 @bp.route('/upload', methods=["POST"])
 def upload():
+    """Handle file upload."""
     f = request.files["file"]
     if request.form.get("dropbox"):
         Thread(
@@ -48,6 +51,7 @@ def upload():
 
 @bp.route('/uploadbot', methods=["POST"])
 def uploadbot():
+    """Handle file upload and return a simpler response for automated access."""
     f = request.files["file"]
     filename = performupload(f)
     if filename is not None:
@@ -58,6 +62,7 @@ def uploadbot():
 
 @uses_db
 def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
+    """Rename and upload file to Amazon S3, returning its new name."""
     if not f:
         return None
 

@@ -75,28 +75,28 @@ def userbot(username):
 
 def streamer_logo(streamer):
     """Get the profile picture of a streamer."""
-    return get("{}/users".format(_prefix),
+    return get(f"{_prefix}/users",
                params={'login': streamer},
                headers=app.config['_headers']).json()['data'][0]['profile_image_url']
 
 
 def followed_streams(name):
     """Get the stream info for live channels followed by the given user."""
-    resp = get("{}/users".format(_prefix),
+    resp = get(f"{_prefix}/users",
                params={'login': name},
                headers=app.config['_headers']).json()
 
     my_uid = resp['data'][0]['id']
 
     h = app.config['_headers']
-    h['Authorization'] = "Bearer {}".format(app.config['TWITCH_USER_TOKEN'])
-    resp = get("{}/channels/followed".format(_prefix),
+    h['Authorization'] = f"Bearer {app.config['TWITCH_USER_TOKEN']}"
+    resp = get(f"{_prefix}/channels/followed",
                params={'user_id': my_uid, 'first': 100},
                headers=h)
 
     streamer_uids = [c['broadcaster_id'] for c in resp.json()['data']]
 
-    resp = get('{}/streams'.format(_prefix),
+    resp = get(f'{_prefix}/streams',
                params={'user_id': streamer_uids},
                headers=app.config['_headers'])
 
@@ -105,7 +105,7 @@ def followed_streams(name):
 
 def game_streamers(game: str):
     """Get the 15 highest viewcount streams of a given game."""
-    resp = get("{}/streams".format(_prefix),
+    resp = get(f"{_prefix}/streams",
                params={'game': game, 'limit': 15},
                headers=app.config['_headers'])
 

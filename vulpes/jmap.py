@@ -4,7 +4,8 @@ from requests import get, post
 
 
 class JMAPClient:
-    """The J stands for June!"""
+    """The J stands for June!"""  # noqa: D400 smh
+
     def __init__(self, hostname, username, token):
         self.hostname = hostname
         self.username = username
@@ -33,7 +34,7 @@ class JMAPClient:
 
     @property
     def account_id(self):
-        """The accountId for the account matching self.username"""
+        """The accountId for the account matching self.username."""
         if self._account_id:
             return self._account_id
 
@@ -48,7 +49,7 @@ class JMAPClient:
 
     @property
     def upload_url(self):
-        """The account's upload url for attachments"""
+        """The account's upload url for attachments."""
         if self._upload_url:
             return self._upload_url
 
@@ -58,7 +59,7 @@ class JMAPClient:
 
     @property
     def identity_id(self):
-        """The identityId for an address matching self.username"""
+        """The identityId for an address matching self.username."""
         if self._identity_id:
             return self._identity_id
 
@@ -67,15 +68,15 @@ class JMAPClient:
             "methodCalls": [
                 ["Identity/get",
                     {"accountId": self.account_id},
-                 'i']
-            ]
+                 'i'],
+            ],
         })
 
         identity_id = next(
             filter(
                 lambda i: i["email"] == self.username,
                 ident_result["methodResponses"][0][1]["list"],
-            )
+            ),
         )["id"]
 
         self._identity_id = str(identity_id)
@@ -83,7 +84,7 @@ class JMAPClient:
 
     # @cache
     def mailbox_by_name(self, name: str) -> str:
-        """Retrieves the ID of the first mailbox matching the given name."""
+        """Retrieve the ID of the first mailbox matching the given name."""
         response = self.jmap_call({
             'using': ["urn:ietf:params:jmap:mail"],
             'methodCalls': [
@@ -91,8 +92,8 @@ class JMAPClient:
                     {"accountId": self.account_id,
                         "filter": {"name": name},
                      },
-                 "a"]
-            ]
+                 "a"],
+            ],
         })
         # Responses -> Response for Call #0 -> resp[1] is the result dict ->
         #   list of matching ids -> First one
@@ -100,9 +101,7 @@ class JMAPClient:
 
     def prepare_plaintext_email(self, to_addr: str,
                                 subject: str, body: str) -> dict:
-        """Prepares a dictionary containing the required fields to send a
-        plaintext email message.
-        """
+        """Prepare a dictionary containing the required fields to send aplaintext email message."""
         return {
             "from": [{"email": self.username}],
             "to": [{"email": to_addr}],
@@ -120,11 +119,11 @@ class JMAPClient:
         """Upload an attachment and append its date to the message draft."""
         uploaded = self.file_upload(file_data)
         if 'attachments' not in draft:
-            draft['attachments'] = list()
+            draft['attachments'] = []
         draft["attachments"].append({
             "blobId": uploaded["blobId"],
             "type": uploaded["type"],
-            "name": filename
+            "name": filename,
         })
 
     def send(self, message: dict) -> dict:
@@ -136,7 +135,7 @@ class JMAPClient:
             "methodCalls": [
                 ["Email/set",
                     {"accountId": self.account_id,
-                        "create": {"draft": message}
+                        "create": {"draft": message},
                      },
                  "a"],
                 ["EmailSubmission/set",
@@ -144,22 +143,21 @@ class JMAPClient:
                         "create": {
                             "sendIt": {
                                 "emailId": "#draft",
-                                "identityId": self.identity_id
-                            }
+                                "identityId": self.identity_id,
+                            },
                         },
                         "onSuccessDestroyEmail": ["#sendIt"],
                      },
-                 "b"]
-            ]
+                 "b"],
+            ],
         })
 
     def jmap_call(self, call: dict) -> dict:
-        """Make a JMAP POST request to the API, returning the response as a
-                Python data structure."""
+        """Make a JMAP POST request to the API, return the response as a Python data structure."""
         return self._api_call(self.api_url, dumps(call))
 
     def file_upload(self, file_data: bytes) -> dict:
-        """Uploads file date to the out-of-band upload endpoint.
+        """Upload file date to the out-of-band upload endpoint.
 
         Returns a response what looks like this:
 

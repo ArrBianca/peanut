@@ -1,4 +1,5 @@
-from flask import current_app as app, render_template, jsonify
+from flask import current_app as app
+from flask import jsonify, render_template
 from requests import get
 
 from . import bp
@@ -9,6 +10,7 @@ _prefix = 'https://api.twitch.tv/helix'
 
 @bp.before_app_request
 def a():
+    """Add the twitch authorization to all the requests made in the views below."""
     app.config['_headers'] = {'Accept': 'application/vnd.twitchtv.v5+json',
                               'Client-ID': app.config['TWITCH_CLIENT_ID'],
                               'Authorization': "Bearer {}".format(app.config['TWITCH_TOKEN'])}
@@ -16,6 +18,7 @@ def a():
 
 @bp.route("/game/<game>")
 def names(game):
+    """Display a list of the top streamers for a particular game."""
     res = game_streamers(game)
 
     streamers = multifind(res, "channel", "display_name")
@@ -31,6 +34,7 @@ def names(game):
 
 @bp.route("/user/<username>")
 def following(username):
+    """Display a list of all active streams from a user's following list."""
     res = followed_streams(username)
 
     streamers = multifind(res, "user_name")
@@ -47,6 +51,7 @@ def following(username):
 
 @bp.route("/user/<username>/simple")
 def userbot(username):
+    """Return the same data as above, but as a JSON object for automated parsing."""
     res = followed_streams(username)
 
     streamers = multifind(res, "user_name")
@@ -55,42 +60,44 @@ def userbot(username):
 
     logos = [streamer_logo(s) for s in streamers]
 
-    resp = list()
+    resp = []
     for streamer, game, viewer, logo in zip(streamers, games, viewers, logos):
         resp.append(
             {
                 'streamer': streamer,
                 'game': game,
                 'viewers': viewer,
-                'logo': logo
-            }
+                'logo': logo,
+            },
         )
 
     return jsonify(resp)
 
 
 def streamer_logo(streamer):
-    return get("{}/users".format(_prefix),
+    """Get the profile picture of a streamer."""
+    return get(f"{_prefix}/users",
                params={'login': streamer},
                headers=app.config['_headers']).json()['data'][0]['profile_image_url']
 
 
 def followed_streams(name):
-    resp = get("{}/users".format(_prefix),
+    """Get the stream info for live channels followed by the given user."""
+    resp = get(f"{_prefix}/users",
                params={'login': name},
                headers=app.config['_headers']).json()
 
     my_uid = resp['data'][0]['id']
 
     h = app.config['_headers']
-    h['Authorization'] = "Bearer {}".format(app.config['TWITCH_USER_TOKEN'])
-    resp = get("{}/channels/followed".format(_prefix),
+    h['Authorization'] = f"Bearer {app.config['TWITCH_USER_TOKEN']}"
+    resp = get(f"{_prefix}/channels/followed",
                params={'user_id': my_uid, 'first': 100},
                headers=h)
 
     streamer_uids = [c['broadcaster_id'] for c in resp.json()['data']]
 
-    resp = get('{}/streams'.format(_prefix),
+    resp = get(f'{_prefix}/streams',
                params={'user_id': streamer_uids},
                headers=app.config['_headers'])
 
@@ -98,7 +105,8 @@ def followed_streams(name):
 
 
 def game_streamers(game: str):
-    resp = get("{}/streams".format(_prefix),
+    """Get the 15 highest viewcount streams of a given game."""
+    resp = get(f"{_prefix}/streams",
                params={'game': game, 'limit': 15},
                headers=app.config['_headers'])
 

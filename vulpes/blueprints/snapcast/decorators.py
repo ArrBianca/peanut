@@ -8,20 +8,20 @@ from ...nitre import Podcast
 
 
 def authorization_required(func):
+    """Check Bearer token of incoming requests, based on the podcast being accessed."""
     @wraps(func)
     def inner(*args, **kwargs):
         if not request.authorization:
             return abort(401)  # No authentication supplied.
 
         db = get_db()
-        result = db.first_or_404(
+        result = db.first_or_404(  # Invalid podcast ID.
             select(Podcast.auth_token)
-            .where(Podcast.uuid == kwargs['podcast_uuid'])
+            .where(Podcast.uuid == kwargs['podcast_uuid']),
         )
 
         if request.authorization.token == str(result):
             return func(*args, **kwargs)
-        else:
-            return abort(401)  # Authentication not correct.
+        return abort(401)  # Authentication not correct.
 
     return inner

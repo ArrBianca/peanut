@@ -1,32 +1,35 @@
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 from threading import Thread
 
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from .util import randomname, send_file
 from ... import get_amazon
-from ...connections import uses_db, get_jmap
+from ...connections import get_jmap, uses_db
 from ...nitre import PeanutFile
+from .util import randomname, send_file
 
 bp = Blueprint('mane', __name__)
 
 
 @bp.route('/')
 def mainpage():
+    """Get the site's homepage."""
     return render_template('mainpage.html')
 
 
 @bp.route('/dropbox')
 def dropbox():
+    """Get the site's homepage, but with the "Dropbox" checkbox checked."""
     return render_template('mainpage.html', dropbox="checked")
 
 
 @bp.route('/upload', methods=["POST"])
 def upload():
+    """Handle file upload."""
     f = request.files["file"]
     if request.form.get("dropbox"):
         Thread(
@@ -35,29 +38,29 @@ def upload():
             # or the config to create it, from the app context. Doesn't exist
             # in a thread. We have to pull it out here and pass it along.
             args=(get_jmap(), f.filename, f.read()),
-            daemon=True
+            daemon=True,
         ).start()
         return redirect(url_for('mane.dropbox'))
 
     filename = performupload(f)
     if filename is not None:
         return render_template("fileuploaded.html", link=filename)
-    else:
-        return "Error, probably an empty upload field"
+    return "Error, probably an empty upload field"
 
 
 @bp.route('/uploadbot', methods=["POST"])
 def uploadbot():
+    """Handle file upload and return a simpler response for automated access."""
     f = request.files["file"]
     filename = performupload(f)
     if filename is not None:
         return "http://f.peanut.one/" + filename
-    else:
-        return "Error, probably an empty upload field"
+    return "Error, probably an empty upload field"
 
 
 @uses_db
 def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
+    """Rename and upload file to Amazon S3, returning its new name."""
     if not f:
         return None
 
@@ -66,12 +69,11 @@ def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
     if customname is not None:
         result = db.session.execute(
             select(PeanutFile)
-            .where(PeanutFile.filename == customname)
+            .where(PeanutFile.filename == customname),
         ).fetchone()
         if result is not None:
             return None
-        else:
-            newname = customname + "." + ext
+        newname = customname + "." + ext
     else:
         newname = randomname(ext)
 
@@ -83,8 +85,8 @@ def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
             filename=newname,
             size=size,
             origin_name=filename,
-            tstamp=datetime.now(timezone.utc)
-        )
+            tstamp=datetime.now(timezone.utc),
+        ),
     )
     db.session.commit()
     # amazon.upload(newname, f.stream)

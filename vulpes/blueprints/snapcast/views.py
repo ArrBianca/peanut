@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from uuid import UUID
 from uuid import uuid4
 
@@ -17,13 +17,12 @@ from ...connections import uses_db
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 @uses_db
 def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
-    cast = db.first_or_404(
+    cast: magus.Podcast = db.first_or_404(
         select(magus.Podcast)
         .where(magus.Podcast.uuid == podcast_uuid)
     )
-    # cast = db.execute(SELECT_PODCAST_BY_UUID, (podcast_uuid,)).fetchone()
 
-    # The caveat to sqlalchemy and sqlite: It stores datetimes as naive
+    # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
     last_modified: datetime = cast['last_modified'].replace(tzinfo=timezone.utc)
     if since := request.if_modified_since:
         # The database column stores microseconds which aren't included in the
@@ -32,15 +31,15 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
             return Response(status=304)
 
     p = Podcast(
-        name=cast['name'],
-        description=cast['description'],
-        website=cast['website'],
-        category=Category(cast['category']),
-        language="en-US",
-        explicit=cast['explicit'],
-        image=cast['image'],
-        authors=[Person(name=cast['author_name'])],
-        withhold_from_itunes=bool(cast['withhold_from_itunes']),
+        name=cast.name,
+        description=cast.description,
+        website=cast.website,
+        category=Category(cast.category),
+        language=cast.language,
+        explicit=cast.explicit,
+        image=cast.image,
+        authors=[Person(name=cast.author_name)],
+        withhold_from_itunes=bool(cast.withhold_from_itunes),
         last_updated=last_modified,
     )
 
@@ -48,27 +47,25 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
         select(magus.Episode)
         .where(magus.Episode.podcast_uuid == podcast_uuid)
     )
-    # episodes = res.fetchall()
     for episode in episodes:
+        # Row object is a 2-tuple with the object in [0]. idk why.
         episode: magus.Episode = episode[0]
-
-        pub_date = episode.pub_date.replace(tzinfo=timezone.utc)
 
         e = Episode(
             id=str(episode.uuid),
-            title=episode['title'],
-            summary=episode['summary'],
-            subtitle=episode['subtitle'],
-            long_summary=episode['long_summary'],
+            title=episode.title,
+            summary=episode.summary,
+            subtitle=episode.subtitle,
+            long_summary=episode.long_summary,
             media=Media(
-                episode['media_url'],
-                size=episode['media_size'],
-                type=episode['media_type'],
+                episode.media_url,
+                size=episode.media_size,
+                type=episode.media_type,
                 duration=episode.media_duration,
             ),
-            publication_date=pub_date,
-            link=episode['link'],
-            image=episode['episode_art']
+            publication_date=episode.pub_date.replace(tzinfo=timezone.utc),
+            link=episode.link,
+            image=episode.episode_art
         )
         p.add_episode(e)
 
@@ -126,11 +123,9 @@ def publish_episode(db: SQLAlchemy, podcast_uuid: UUID):
         "title":            json.get('title', "Untitled Episode"),
         "subtitle":         json.get('subtitle'),
 
-        "uuid":             str(uuid4()),
         "media_url":        json['url'],
         "media_size":       json['size'],
         "media_type":       json['ftype'],
-        "media_duration":   json.get('duration'),
 
         "link":             json.get('link'),
         "pub_date":         pub_date,

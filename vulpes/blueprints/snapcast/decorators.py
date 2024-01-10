@@ -3,10 +3,8 @@ from functools import wraps
 from flask import abort, request
 from sqlalchemy import select
 
-from .sql import SELECT_PODCAST_AUTH_KEY
 from ...connections import get_db
 from ...magus import Podcast
-from uuid import UUID
 
 
 def authorization_required(func):
@@ -30,4 +28,5 @@ def authorization_required(func):
             return func(*args, **kwargs)
         else:
             return abort(401)  # Authentication not correct.
+
     return inner

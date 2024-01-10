@@ -1,13 +1,12 @@
-import sqlite3
 from functools import wraps
-from typing import Any, Callable
+from typing import Any
 
 import click
 from flask import current_app, g
-from flask_sqlalchemy import SQLAlchemy
 
-from .jmap import JMAPClient
 from . import db
+from .jmap import JMAPClient
+
 
 def init_app(app):
     app.teardown_appcontext(close_db)

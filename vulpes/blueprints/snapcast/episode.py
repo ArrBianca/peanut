@@ -1,4 +1,3 @@
-from datetime import datetime, timezone
 from uuid import UUID
 
 from flask import abort, jsonify, request
@@ -6,10 +5,10 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, update, delete
 
 from . import bp
-from .sql import touch_podcast
 from .decorators import authorization_required
+from .sql import touch_podcast
 from ...connections import uses_db
-from ...magus import Episode, Podcast
+from ...magus import Episode
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])

@@ -19,7 +19,6 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
     Either an integer episode number,a UUID, or `-1` which returns the latest
     episode.
     """
-    print(podcast_uuid, episode_id)
     try:
         episode_id = int(episode_id)
         if episode_id == -1:  # Special case: get the latest episode

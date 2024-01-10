@@ -33,7 +33,7 @@ class DatetimeFormattingModel:
 class Podcast(DatetimeFormattingModel, db.Model):
     __tablename__ = 'podcast'
 
-    rowid: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[UUID]
     name: Mapped[str]
     website: Mapped[str]
@@ -58,7 +58,7 @@ class Podcast(DatetimeFormattingModel, db.Model):
 class Episode(DatetimeFormattingModel, db.Model):
     __tablename__ = 'episode'
 
-    rowid: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[UUID]
     podcast_uuid = mapped_column(ForeignKey(Podcast.uuid))
     title: Mapped[Optional[str]]
@@ -83,10 +83,10 @@ class Episode(DatetimeFormattingModel, db.Model):
     )
 
 
-class Files(db.Model):
-    __tablename__ = 'peanunt_files'
+class PeanutFile(db.Model):
+    __tablename__ = 'peanut_file'
 
-    rowid: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[int] = mapped_column(primary_key=True)
     filename: Mapped[Optional[str]]
     size: Mapped[Optional[int]]
     origin_name: Mapped[Optional[str]]

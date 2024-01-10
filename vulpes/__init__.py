@@ -14,8 +14,7 @@ def create_app(test_config=None):
 
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'vulpes.sqlite'),
-        SQLALCHEMY_DATABASE_URI="sqlite:///../instance/neo_vulpes.sqlite"
+        SQLALCHEMY_DATABASE_URI=os.path.join("sqlite:///" + app.instance_path, 'nitre.sqlite'),
     )
 
     if test_config is None:

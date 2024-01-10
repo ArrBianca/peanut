@@ -17,9 +17,9 @@ from ...connections import uses_db
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 @uses_db
 def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
-    cast: magus.Podcast = db.first_or_404(
-        select(magus.Podcast)
-        .where(magus.Podcast.uuid == podcast_uuid)
+    cast: nitre.Podcast = db.first_or_404(
+        select(nitre.Podcast)
+        .where(nitre.Podcast.uuid == podcast_uuid)
     )
 
     # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
@@ -44,12 +44,12 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
     )
 
     episodes = db.session.execute(
-        select(magus.Episode)
-        .where(magus.Episode.podcast_uuid == podcast_uuid)
+        select(nitre.Episode)
+        .where(nitre.Episode.podcast_uuid == podcast_uuid)
     )
     for episode in episodes:
         # Row object is a 2-tuple with the object in [0]. idk why.
-        episode: magus.Episode = episode[0]
+        episode: nitre.Episode = episode[0]
 
         e = Episode(
             id=str(episode.uuid),
@@ -78,8 +78,8 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
 @uses_db
 def feed_head(db: SQLAlchemy, podcast_uuid: UUID):
     last_modified = db.one_or_404(
-        select(magus.Podcast.last_modified)
-        .where(magus.Podcast.uuid == podcast_uuid)
+        select(nitre.Podcast.last_modified)
+        .where(nitre.Podcast.uuid == podcast_uuid)
     )
     response = Response()
     response.last_modified = last_modified.replace(tzinfo=timezone.utc)
@@ -133,7 +133,7 @@ def publish_episode(db: SQLAlchemy, podcast_uuid: UUID):
         "pub_date":         pub_date,
     }
 
-    db.session.add(magus.Episode(**data))
+    db.session.add(nitre.Episode(**data))
     touch_podcast(db, podcast_uuid)
     db.session.commit()
     return jsonify(success=True)

@@ -1,3 +1,4 @@
+from datetime import timedelta, datetime
 from uuid import UUID
 
 from flask import abort, jsonify, request
@@ -52,6 +53,11 @@ def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
     """Just give it a dict with key=rowname value=newvalue. let's get naïve"""
     json = request.json
 
+    if 'media_duration' in json:
+        json['media_duration'] = timedelta(seconds=json['media_duration'])
+    if 'pub_date' in json:
+        json['pub_date'] = datetime.fromisoformat(json['pub_date'])
+
     result = db.session.execute(
         update(Episode)
         .where(Episode.uuid == episode_uuid)
@@ -73,7 +79,7 @@ def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
         .where(Episode.podcast_uuid == podcast_uuid)
     )
     touch_podcast(db, podcast_uuid)
-    db.commit()
+    db.session.commit()
 
     if result.rowcount == 0:
         return abort(404)

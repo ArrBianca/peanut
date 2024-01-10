@@ -43,13 +43,12 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
         last_updated=last_modified,
     )
 
-    episodes = db.session.execute(
+    episodes = db.session.scalars(
         select(nitre.Episode)
         .where(nitre.Episode.podcast_uuid == podcast_uuid)
     )
     for episode in episodes:
         # Row object is a 2-tuple with the object in [0]. idk why.
-        episode: nitre.Episode = episode[0]
 
         e = Episode(
             id=str(episode.uuid),

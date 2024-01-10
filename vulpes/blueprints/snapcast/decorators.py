@@ -14,7 +14,7 @@ def authorization_required(func):
             return abort(401)  # No authentication supplied.
 
         db = get_db()
-        result = db.first_or_404(
+        result = db.first_or_404(  # Invalid podcast ID.
             select(Podcast.auth_token)
             .where(Podcast.uuid == kwargs['podcast_uuid'])
         )

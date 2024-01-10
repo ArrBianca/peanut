@@ -91,9 +91,9 @@ def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
 @uses_db
 @authorization_required
 def get_all_episodes(db: SQLAlchemy, podcast_uuid: UUID):
-    results = db.session.execute(
+    results = db.session.scalars(
         select(Episode)
         .where(Episode.podcast_uuid == podcast_uuid)
     )
 
-    return jsonify([row[0].as_dict() for row in results])
+    return jsonify([episode.as_dict() for episode in results])

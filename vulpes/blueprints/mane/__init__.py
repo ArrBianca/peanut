@@ -1,4 +1,3 @@
-import time
 from datetime import timezone, datetime
 from threading import Thread
 
@@ -8,13 +7,10 @@ from sqlalchemy import select
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from .queries import QUERY_SELECT_BY_FILENAME
 from .util import randomname, send_file
 from ... import get_amazon
 from ...connections import uses_db, get_jmap
-from typing import IO
-
-from ...magus import Files
+from ...nitre import Files
 
 bp = Blueprint('mane', __name__)
 

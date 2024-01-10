@@ -4,7 +4,7 @@ from uuid import UUID
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import update
 
-from ...magus import Podcast
+from ...nitre import Podcast
 
 
 def touch_podcast(db: SQLAlchemy, podcast_uuid: UUID):

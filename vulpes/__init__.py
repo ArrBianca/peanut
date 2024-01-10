@@ -3,10 +3,9 @@ from urllib.parse import urlparse, urlunparse
 
 import boto3
 from flask import Flask, render_template, g, request, redirect
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
-from .magus import db
+
+from .nitre import db
 
 
 def create_app(test_config=None):

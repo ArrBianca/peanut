@@ -10,7 +10,7 @@ from sqlalchemy import select
 from . import bp
 from .decorators import authorization_required
 from .sql import touch_podcast
-from ... import magus
+from ... import nitre
 from ...connections import uses_db
 
 

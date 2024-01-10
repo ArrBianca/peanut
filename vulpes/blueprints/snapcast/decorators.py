@@ -4,7 +4,7 @@ from flask import abort, request
 from sqlalchemy import select
 
 from ...connections import get_db
-from ...magus import Podcast
+from ...nitre import Podcast
 
 
 def authorization_required(func):

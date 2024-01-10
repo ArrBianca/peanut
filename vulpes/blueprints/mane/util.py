@@ -5,7 +5,7 @@ from flask import current_app as app
 from sqlalchemy import select
 
 from ...connections import get_db
-from ...magus import Files
+from ...nitre import Files
 
 
 def randomname(ext=None):

@@ -8,7 +8,7 @@ from . import bp
 from .decorators import authorization_required
 from .sql import touch_podcast
 from ...connections import uses_db
-from ...magus import Episode
+from ...nitre import Episode
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])

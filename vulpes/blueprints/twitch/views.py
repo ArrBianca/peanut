@@ -1,4 +1,5 @@
-from flask import current_app as app, render_template, jsonify
+from flask import current_app as app
+from flask import jsonify, render_template
 from requests import get
 
 from . import bp

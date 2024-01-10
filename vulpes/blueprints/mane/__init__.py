@@ -1,16 +1,16 @@
-from datetime import timezone, datetime
+from datetime import datetime, timezone
 from threading import Thread
 
-from flask import Blueprint, render_template, request, redirect, url_for
+from flask import Blueprint, redirect, render_template, request, url_for
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from .util import randomname, send_file
 from ... import get_amazon
-from ...connections import uses_db, get_jmap
+from ...connections import get_jmap, uses_db
 from ...nitre import PeanutFile
+from .util import randomname, send_file
 
 bp = Blueprint('mane', __name__)
 

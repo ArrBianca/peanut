@@ -3,8 +3,8 @@ from typing import Optional
 from uuid import UUID
 
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import ForeignKey, CheckConstraint
-from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
+from sqlalchemy import CheckConstraint, ForeignKey
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 
 
 class Base(DeclarativeBase):

@@ -1,15 +1,15 @@
-from datetime import timedelta, datetime
+from datetime import datetime, timedelta
 from uuid import UUID
 
 from flask import abort, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy import select, update, delete
+from sqlalchemy import delete, select, update
 
+from ...connections import uses_db
+from ...nitre import Episode
 from . import bp
 from .decorators import authorization_required
 from .sql import touch_podcast
-from ...connections import uses_db
-from ...nitre import Episode
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])

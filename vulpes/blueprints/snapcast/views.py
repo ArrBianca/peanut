@@ -1,17 +1,16 @@
-from datetime import datetime, timezone, timedelta
-from uuid import UUID
-from uuid import uuid4
+from datetime import datetime, timedelta, timezone
+from uuid import UUID, uuid4
 
-from flask import request, Response, jsonify
+from flask import Response, jsonify, request
 from flask_sqlalchemy import SQLAlchemy
-from podgen import Podcast, Episode, Media, Person, Category
+from podgen import Category, Episode, Media, Person, Podcast
 from sqlalchemy import select
 
+from ... import nitre
+from ...connections import uses_db
 from . import bp
 from .decorators import authorization_required
 from .sql import touch_podcast
-from ... import nitre
-from ...connections import uses_db
 
 
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])

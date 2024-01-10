@@ -2,7 +2,7 @@ import os
 from urllib.parse import urlparse, urlunparse
 
 import boto3
-from flask import Flask, render_template, g, request, redirect
+from flask import Flask, g, redirect, render_template, request
 from werkzeug.middleware.proxy_fix import ProxyFix
 
 from .nitre import db

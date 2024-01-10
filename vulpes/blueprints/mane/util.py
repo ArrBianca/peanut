@@ -2,9 +2,10 @@ import string
 from random import choice
 
 from flask import current_app as app
+from sqlalchemy import select
 
-from .db import QUERY_SELECT_BY_FILENAME
 from ...connections import get_db
+from ...nitre import PeanutFile
 
 
 def randomname(ext=None):
@@ -13,7 +14,12 @@ def randomname(ext=None):
                        for _ in range(app.config['FILE_NAME_LENGTH'])])
     if ext is not None:
         randname = randname + '.' + ext
-    if c.execute(QUERY_SELECT_BY_FILENAME, (randname,)).fetchone() is not None:
+
+    result = c.session.execute(
+        select(PeanutFile)
+        .where(PeanutFile.filename == randname)
+    ).fetchone()
+    if result is not None:
         return randomname(ext)
     else:
         return randname

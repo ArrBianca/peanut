@@ -1,21 +1,29 @@
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone, timedelta
+from uuid import UUID
 from uuid import uuid4
 
 from flask import request, Response, jsonify
+from flask_sqlalchemy import SQLAlchemy
 from podgen import Podcast, Episode, Media, Person, Category
+from sqlalchemy import select
 
 from . import bp
 from .decorators import authorization_required
-from .sql import *
+from .sql import touch_podcast
+from ... import nitre
 from ...connections import uses_db
 
 
-@bp.route("/<podcast_uuid>/feed.xml", methods=["GET"])
+@bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 @uses_db
-def generate_feed(db, podcast_uuid):
-    cast = db.execute(SELECT_PODCAST_BY_UUID, (podcast_uuid,)).fetchone()
+def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
+    cast: nitre.Podcast = db.first_or_404(
+        select(nitre.Podcast)
+        .where(nitre.Podcast.uuid == podcast_uuid)
+    )
 
-    last_modified = datetime.fromisoformat(cast['last_modified'])
+    # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
+    last_modified: datetime = cast['last_modified'].replace(tzinfo=timezone.utc)
     if since := request.if_modified_since:
         # The database column stores microseconds which aren't included in the
         # request. If they're just about equal we don't update anything.
@@ -23,39 +31,41 @@ def generate_feed(db, podcast_uuid):
             return Response(status=304)
 
     p = Podcast(
-        name=cast['name'],
-        description=cast['description'],
-        website=cast['website'],
-        category=Category(cast['category']),
-        language="en-US",
-        explicit=cast['explicit'],
-        image=cast['image'],
-        authors=[Person(name=cast['author_name'])],
-        withhold_from_itunes=bool(cast['withhold_from_itunes']),
+        name=cast.name,
+        description=cast.description,
+        website=cast.website,
+        category=Category(cast.category),
+        language=cast.language,
+        explicit=cast.explicit,
+        image=cast.image,
+        authors=[Person(name=cast.author_name)],
+        withhold_from_itunes=bool(cast.withhold_from_itunes),
         last_updated=last_modified,
     )
 
-    res = db.execute("SELECT * FROM episode WHERE podcast_uuid=?", (cast['uuid'],))
-    episodes = res.fetchall()
+    episodes = db.session.execute(
+        select(nitre.Episode)
+        .where(nitre.Episode.podcast_uuid == podcast_uuid)
+    )
     for episode in episodes:
-        if media_duration := episode['media_duration']:
-            media_duration = timedelta(seconds=media_duration)
+        # Row object is a 2-tuple with the object in [0]. idk why.
+        episode: nitre.Episode = episode[0]
 
         e = Episode(
-            id=episode['uuid'],
-            title=episode['title'],
-            summary=episode['summary'],
-            subtitle=episode['subtitle'],
-            long_summary=episode['long_summary'],
+            id=str(episode.uuid),
+            title=episode.title,
+            summary=episode.summary,
+            subtitle=episode.subtitle,
+            long_summary=episode.long_summary,
             media=Media(
-                episode['media_url'],
-                size=episode['media_size'],
-                type=episode['media_type'],
-                duration=media_duration,
+                episode.media_url,
+                size=episode.media_size,
+                type=episode.media_type,
+                duration=episode.media_duration,
             ),
-            publication_date=datetime.fromisoformat(episode['pub_date']),
-            link=episode['link'],
-            image=episode['episode_art']
+            publication_date=episode.pub_date.replace(tzinfo=timezone.utc),
+            link=episode.link,
+            image=episode.episode_art
         )
         p.add_episode(e)
 
@@ -64,12 +74,15 @@ def generate_feed(db, podcast_uuid):
     return response
 
 
-@bp.route("/<podcast_uuid>/feed.xml", methods=["HEAD"])
+@bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["HEAD"])
 @uses_db
-def feed_head(db, podcast_uuid):
-    cast = db.execute(SELECT_PODCAST_BY_UUID, (podcast_uuid,)).fetchone()
+def feed_head(db: SQLAlchemy, podcast_uuid: UUID):
+    last_modified = db.one_or_404(
+        select(nitre.Podcast.last_modified)
+        .where(nitre.Podcast.uuid == podcast_uuid)
+    )
     response = Response()
-    response.last_modified = datetime.fromisoformat(cast['last_modified'])
+    response.last_modified = last_modified.replace(tzinfo=timezone.utc)
     return response
 
 
@@ -77,15 +90,15 @@ def feed_head(db, podcast_uuid):
 def generate_snapcast():
     """shortcut!"""
     if request.method == "HEAD":
-        return feed_head("1787bd99-9d00-48c3-b763-5837f8652bd9")
+        return feed_head(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
     else:
-        return generate_feed('1787bd99-9d00-48c3-b763-5837f8652bd9')
+        return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
 
 
-@bp.route("/<podcast_uuid>/publish", methods=["POST"])
+@bp.route("/<uuid:podcast_uuid>/publish", methods=["POST"])
 @uses_db
 @authorization_required
-def publish_episode(db, podcast_uuid):
+def publish_episode(db: SQLAlchemy, podcast_uuid: UUID):
     """
     Required elements in JSON request body:
         url:       str,
@@ -110,20 +123,17 @@ def publish_episode(db, podcast_uuid):
         "title":            json.get('title', "Untitled Episode"),
         "subtitle":         json.get('subtitle'),
 
-        "uuid":             str(uuid4()),
+        "uuid":             uuid4(),
         "media_url":        json['url'],
         "media_size":       json['size'],
         "media_type":       json['ftype'],
-        "media_duration":   json.get('duration'),
+        "media_duration":   timedelta(seconds=json.get('duration')),
 
         "link":             json.get('link'),
         "pub_date":         pub_date,
     }
 
-    db.execute(ADD_EPISODE, data)
-    db.execute(
-        "UPDATE podcast SET last_modified = ? WHERE uuid = ?",
-        (datetime.now(timezone.utc), podcast_uuid)
-    )
-    db.commit()
+    db.session.add(nitre.Episode(**data))
+    touch_podcast(db, podcast_uuid)
+    db.session.commit()
     return jsonify(success=True)

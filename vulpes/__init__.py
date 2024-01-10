@@ -5,6 +5,8 @@ import boto3
 from flask import Flask, render_template, g, request, redirect
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+from .nitre import db
+
 
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
@@ -12,7 +14,7 @@ def create_app(test_config=None):
 
     app.config.from_mapping(
         SECRET_KEY='dev',
-        DATABASE=os.path.join(app.instance_path, 'vulpes.sqlite'),
+        SQLALCHEMY_DATABASE_URI=os.path.join("sqlite:///" + app.instance_path, 'nitre.sqlite'),
     )
 
     if test_config is None:
@@ -30,6 +32,10 @@ def create_app(test_config=None):
 
     if app.config['SERVER_NAME'] == 'peanut.one':
         app.url_map.default_subdomain = "www"
+
+    db.init_app(app)
+    with app.app_context():
+        db.create_all()
 
     from . import connections
     connections.init_app(app)

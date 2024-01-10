@@ -1,15 +1,36 @@
 from datetime import datetime, timedelta, timezone
-from pprint import pformat as pf
 from typing import Optional
 from uuid import UUID
 
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import ForeignKey, CheckConstraint
-from sqlalchemy.orm import Mapped, mapped_column
-
-from . import db
+from sqlalchemy.orm import Mapped, mapped_column, DeclarativeBase
 
 
-class Podcast(db.Model):
+class Base(DeclarativeBase):
+    pass
+
+
+db = SQLAlchemy(model_class=Base)
+
+
+class DatetimeFormattingModel:
+    __table__ = None
+
+    def as_dict(self):
+        d = {}
+        for col in self.__table__.columns:
+            val = getattr(self, col.name)
+            if isinstance(val, timedelta):
+                d[col.name] = val.total_seconds()
+            elif isinstance(val, datetime):
+                d[col.name] = val.replace(tzinfo=timezone.utc).isoformat()
+            else:
+                d[col.name] = val
+        return d
+
+
+class Podcast(DatetimeFormattingModel, db.Model):
     __tablename__ = 'podcast'
 
     rowid: Mapped[int] = mapped_column(primary_key=True)
@@ -29,34 +50,12 @@ class Podcast(db.Model):
     last_modified: Mapped[Optional[datetime]]
     is_serial: Mapped[Optional[bool]]
 
-    def as_dict(self):
-        d = {}
-        for col in self.__table__.columns:
-            val = getattr(self, col.name)
-            if isinstance(val, timedelta):
-                d[col.name] = val.total_seconds()
-            elif isinstance(val, datetime):
-                d[col.name] = val.replace(tzinfo=timezone.utc).isoformat()
-            else:
-                d[col.name] = val
-        return d
-
     def __init__(self, **kwargs):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
 
-    def __str__(self):
-        output = {}
-        for c in self.__table__.columns:
-            output[c.name] = getattr(self, c.name)
-        return pf(output)
 
-    def __getitem__(self, item):
-        return getattr(self, item)
-
-
-
-class Episode(db.Model):
+class Episode(DatetimeFormattingModel, db.Model):
     __tablename__ = 'episode'
 
     rowid: Mapped[int] = mapped_column(primary_key=True)
@@ -74,35 +73,9 @@ class Episode(db.Model):
     link: Mapped[Optional[str]]
     episode_art: Mapped[Optional[str]]
 
-    def as_dict(self):
-        d = {}
-        for col in self.__table__.columns:
-            val = getattr(self, col.name)
-            if isinstance(val, timedelta):
-                d[col.name] = val.total_seconds()
-            elif isinstance(val, datetime):
-                d[col.name] = val.replace(tzinfo=timezone.utc).isoformat()
-            else:
-                d[col.name] = val
-        return d
-
     def __init__(self, **kwargs):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-
-    def __str__(self):
-        output = {}
-        for c in self.__table__.columns:
-            output[c.name] = getattr(self, c.name)
-        return pf(output)
-
-    def __getitem__(self, item):
-        if isinstance(item, str):
-            return getattr(self, item)
-        return self.__table__.columns[item]
-
-    def keys(self):
-        return self.__table__.columns.keys()
 
     __table_args__ = (
         CheckConstraint('title IS NOT NULL OR summary IS NOT NULL',

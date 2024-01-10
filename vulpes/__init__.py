@@ -6,13 +6,7 @@ from flask import Flask, render_template, g, request, redirect
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
-
-
-class Base(DeclarativeBase):
-    pass
-
-
-db = SQLAlchemy(model_class=Base)
+from .magus import db
 
 
 def create_app(test_config=None):
@@ -23,7 +17,6 @@ def create_app(test_config=None):
         SECRET_KEY='dev',
         DATABASE=os.path.join(app.instance_path, 'vulpes.sqlite'),
         SQLALCHEMY_DATABASE_URI="sqlite:///../instance/neo_vulpes.sqlite"
-
     )
 
     if test_config is None:

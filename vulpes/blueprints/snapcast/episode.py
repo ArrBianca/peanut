@@ -14,7 +14,7 @@ from ...magus import Episode, Podcast
 
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])
 @uses_db
-def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id):
+def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
     """Fetches details of a specific episode.
 
     Either an integer episode number,a UUID, or `-1` which returns the latest
@@ -50,7 +50,7 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id):
 @bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["PATCH"])
 @uses_db
 @authorization_required
-def patch_episode(db: SQLAlchemy, podcast_uuid, episode_uuid):
+def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
     """Just give it a dict with key=rowname value=newvalue. let's get naïve"""
     json = request.json
 
@@ -83,13 +83,13 @@ def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
         return jsonify(success=True)
 
 
-@bp.route("/<podcast_uuid>/episodes", methods=["GET"])
+@bp.route("/<uuid:podcast_uuid>/episodes", methods=["GET"])
 @uses_db
 @authorization_required
-def get_all_episodes(db: SQLAlchemy, podcast_uuid):
+def get_all_episodes(db: SQLAlchemy, podcast_uuid: UUID):
     results = db.session.execute(
         select(Episode)
-        .where(Episode.podcast_uuid == UUID(podcast_uuid))
+        .where(Episode.podcast_uuid == podcast_uuid)
     )
 
-    return jsonify([row._mapping.as_dict() for row in results])
+    return jsonify([row[0].as_dict() for row in results])

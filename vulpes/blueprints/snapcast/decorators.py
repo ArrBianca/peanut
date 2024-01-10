@@ -12,12 +12,15 @@ from uuid import UUID
 def authorization_required(func):
     @wraps(func)
     def inner(*args, **kwargs):
+        print(args, kwargs)
         if not request.authorization:
             return abort(401)  # No authentication supplied.
 
         db = get_db()
-        result = db.first_or_404(select(Podcast.auth_token).where(Podcast.uuid == UUID(kwargs['podcast_uuid'])))
-        # result = db.execute(SELECT_PODCAST_AUTH_KEY, (kwargs['podcast_uuid'],)).fetchone()
+        result = db.first_or_404(
+            select(Podcast.auth_token)
+            .where(Podcast.uuid == kwargs['podcast_uuid'])
+        )
         print(result)
         print(request.authorization.token)
         if result is None:

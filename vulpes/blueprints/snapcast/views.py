@@ -9,6 +9,7 @@ from sqlalchemy import select
 
 from . import bp
 from .decorators import authorization_required
+from .sql import touch_podcast
 from ... import magus
 from ...connections import uses_db
 
@@ -76,9 +77,9 @@ def generate_feed(db: SQLAlchemy, podcast_uuid: UUID):
     return response
 
 
-@bp.route("/<podcast_uuid>/feed.xml", methods=["HEAD"])
+@bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["HEAD"])
 @uses_db
-def feed_head(db, podcast_uuid):
+def feed_head(db: SQLAlchemy, podcast_uuid: UUID):
     last_modified = db.one_or_404(
         select(magus.Podcast.last_modified)
         .where(magus.Podcast.uuid == podcast_uuid)
@@ -97,10 +98,10 @@ def generate_snapcast():
         return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
 
 
-@bp.route("/<podcast_uuid>/publish", methods=["POST"])
+@bp.route("/<uuid:podcast_uuid>/publish", methods=["POST"])
 @uses_db
 @authorization_required
-def publish_episode(db, podcast_uuid):
+def publish_episode(db: SQLAlchemy, podcast_uuid: UUID):
     """
     Required elements in JSON request body:
         url:       str,
@@ -136,10 +137,6 @@ def publish_episode(db, podcast_uuid):
     }
 
     db.session.add(magus.Episode(**data))
-    # db.execute(ADD_EPISODE, data)
-    # db.execute(
-    #     "UPDATE podcast SET last_modified = ? WHERE uuid = ?",
-    #     (datetime.now(timezone.utc), podcast_uuid)
-    # )
-    # db.commit()
+    touch_podcast(db, podcast_uuid)
+    db.session.commit()
     return jsonify(success=True)

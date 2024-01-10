@@ -1,9 +1,9 @@
 from datetime import datetime, timezone
 from uuid import UUID
 
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select, update
 from ...magus import Podcast, Episode
-from ... import db
 
 ADD_EPISODE = """
     INSERT INTO episode (podcast_uuid, title, subtitle, uuid, media_url,
@@ -24,7 +24,7 @@ SELECT_PODCAST_EPISODES = """SELECT * FROM episode WHERE podcast_uuid=?"""  # no
 LAST_MODIFIED_PATTERN = "%a, %d %b %Y %H:%M:%S %Z"
 
 
-def touch_podcast(db, podcast_uuid):
+def touch_podcast(db: SQLAlchemy, podcast_uuid: UUID):
     db.session.execute(
         update(Podcast)
         .where(Podcast.uuid == podcast_uuid)

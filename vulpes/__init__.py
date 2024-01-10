@@ -22,32 +22,9 @@ class Base(DeclarativeBase):
 db = SQLAlchemy(model_class=Base)
 
 
-class CustomJsonProvider(DefaultJSONProvider):
-    def dumps(self, obj, **kw):
-        """
-        Define how to serialize objects that aren't natively serializable by json.dumps.
-
-        Returns:
-        - A dictionary if the object is a FireO model
-        - A list of dictionaries if the object is a FireO QueryIterator or list of models
-        - Datetime objects are serialized to iso strings
-        - All other clases are delegated back to DefaultJSONProvider
-        """
-
-        if isinstance(obj, datetime):
-            obj = obj.replace(tzinfo=timezone.utc).isoformat()
-        elif isinstance(obj, timedelta):
-            obj = obj.total_seconds()
-
-        return super().dumps(obj, **kw)  # Delegate to the default dumps
-
-
 def create_app(test_config=None):
     app = Flask(__name__, instance_relative_config=True)
     app.wsgi_app = ProxyFix(app.wsgi_app)
-
-    app.json_provider_class = CustomJsonProvider
-    app.json = CustomJsonProvider(app)
 
     app.config.from_mapping(
         SECRET_KEY='dev',

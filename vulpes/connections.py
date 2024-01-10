@@ -1,8 +1,10 @@
 import sqlite3
 from functools import wraps
+from typing import Any, Callable
 
 import click
 from flask import current_app, g
+from flask_sqlalchemy import SQLAlchemy
 
 from .jmap import JMAPClient
 from . import db
@@ -50,7 +52,7 @@ def get_db():
     return db
 
 
-def close_db(e=None):
+def close_db(e: Any = None):
     db = g.pop('db', None)
 
     if db is not None:

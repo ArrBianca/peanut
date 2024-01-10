@@ -87,7 +87,6 @@ class Episode(db.Model):
                 d[col.name] = val
         return d
 
-
     def __init__(self, **kwargs):
         for attr, value in kwargs.items():
             setattr(self, attr, value)

@@ -2,14 +2,13 @@ from datetime import datetime, timezone
 from threading import Thread
 
 from flask import Blueprint, redirect, render_template, request, url_for
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import select
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from ... import get_amazon
-from ...connections import get_jmap, uses_db
-from ...nitre import PeanutFile
+from ... import db, get_amazon
+from ...connections import get_jmap
+from .models import PeanutFile
 from .util import randomname, send_file
 
 bp = Blueprint('mane', __name__)
@@ -58,8 +57,7 @@ def uploadbot():
     return "Error, probably an empty upload field"
 
 
-@uses_db
-def performupload(db: SQLAlchemy, f: FileStorage, customname: str = None):
+def performupload(f: FileStorage, customname: str = None):
     """Rename and upload file to Amazon S3, returning its new name."""
     if not f:
         return None

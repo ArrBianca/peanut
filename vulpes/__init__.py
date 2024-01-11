@@ -3,9 +3,20 @@ import os
 
 import boto3
 from flask import Flask, g, render_template
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from .nitre import db
+
+class Base(DeclarativeBase):
+    """The DeclarativeBase you have to use in sqlalchemy."""
+
+    pass
+
+
+print("Surely this should be called only once right?")
+
+db = SQLAlchemy(model_class=Base)
 
 
 def create_app(test_config=None):
@@ -36,8 +47,8 @@ def create_app(test_config=None):
     with app.app_context():
         db.create_all()
 
-    from . import connections
-    connections.init_app(app)
+    # from . import connections
+    # connections.init_app(app)
 
     from .blueprints import mane, snapcast, twitch
     app.register_blueprint(mane.bp)

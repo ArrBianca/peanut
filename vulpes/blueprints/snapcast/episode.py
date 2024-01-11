@@ -2,19 +2,17 @@ from datetime import datetime, timedelta
 from uuid import UUID
 
 from flask import abort, jsonify, request
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import delete, select, update
 
-from ...connections import uses_db
-from ...nitre import Episode
+from ... import db
 from . import bp
 from .decorators import authorization_required
+from .models import Episode
 from .sql import touch_podcast
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])
-@uses_db
-def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
+def get_episode(podcast_uuid: UUID, episode_id: str):
     """Fetch details of a specific episode.
 
     Either an integer episode number,a UUID, or `-1` which returns the latest
@@ -46,9 +44,8 @@ def get_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_id: str):
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["PATCH"])
-@uses_db
 @authorization_required
-def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
+def patch_episode(podcast_uuid: UUID, episode_uuid: UUID):
     """Just give it a dict with key=rowname value=newvalue. let's get naïve."""
     json = request.json
 
@@ -62,23 +59,22 @@ def patch_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
         .where(Episode.uuid == episode_uuid)
         .values(json),
     )
-    touch_podcast(db, podcast_uuid)
+    touch_podcast(podcast_uuid)
     db.session.commit()
 
     return jsonify(success=True, rows=result.rowcount)
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["DELETE"])
-@uses_db
 @authorization_required
-def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
+def delete_episode(podcast_uuid: UUID, episode_uuid: UUID):
     """Delete an episode."""
     result = db.session.execute(
         delete(Episode)
         .where(Episode.uuid == episode_uuid)
         .where(Episode.podcast_uuid == podcast_uuid),
     )
-    touch_podcast(db, podcast_uuid)
+    touch_podcast(podcast_uuid)
     db.session.commit()
 
     if result.rowcount == 0:
@@ -87,9 +83,8 @@ def delete_episode(db: SQLAlchemy, podcast_uuid: UUID, episode_uuid: UUID):
 
 
 @bp.route("/<uuid:podcast_uuid>/episodes", methods=["GET"])
-@uses_db
 @authorization_required
-def get_all_episodes(db: SQLAlchemy, podcast_uuid: UUID):
+def get_all_episodes(podcast_uuid: UUID):
     """Get all episodes for a podcast."""
     results = db.session.scalars(
         select(Episode)

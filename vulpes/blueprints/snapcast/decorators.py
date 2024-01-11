@@ -3,8 +3,8 @@ from functools import wraps
 from flask import abort, request
 from sqlalchemy import select
 
-from ...connections import get_db
-from ...nitre import Podcast
+from ... import db
+from .models import Podcast
 
 
 def authorization_required(func):
@@ -14,7 +14,6 @@ def authorization_required(func):
         if not request.authorization:
             return abort(401)  # No authentication supplied.
 
-        db = get_db()
         result = db.first_or_404(  # Invalid podcast ID.
             select(Podcast.auth_token)
             .where(Podcast.uuid == kwargs['podcast_uuid']),

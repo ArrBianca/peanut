@@ -4,19 +4,18 @@ from random import choice
 from flask import current_app as app
 from sqlalchemy import select
 
-from ...connections import get_db
-from ...nitre import PeanutFile
+from ... import db
+from .models import PeanutFile
 
 
 def randomname(ext=None):
     """Generate a new unique random short name for a file."""
-    c = get_db()
     randname = ''.join([choice(string.ascii_lowercase)
                        for _ in range(app.config['FILE_NAME_LENGTH'])])
     if ext is not None:
         randname = randname + '.' + ext
 
-    result = c.session.execute(
+    result = db.session.execute(
         select(PeanutFile)
         .where(PeanutFile.filename == randname),
     ).fetchone()

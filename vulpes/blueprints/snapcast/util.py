@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 
 from sqlalchemy import update
 
-from ... import db
 from .models import Podcast
+from ... import db
 
 
 def touch_podcast(podcast_uuid):

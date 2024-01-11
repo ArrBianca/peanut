@@ -14,8 +14,6 @@ class Base(DeclarativeBase):
     pass
 
 
-print("Surely this should be called only once right?")
-
 db = SQLAlchemy(model_class=Base)
 
 

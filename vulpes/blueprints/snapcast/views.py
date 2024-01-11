@@ -1,22 +1,24 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from flask import Response, jsonify, request
-from podgen import Category, Episode, Media, Person, Podcast
-from sqlalchemy import select
+import podgen
+from flask import Blueprint, Response, abort, jsonify, request
+from sqlalchemy import delete, select, update
 
 from ... import db
-from . import bp, models
 from .decorators import authorization_required
+from .models import Episode, Podcast
 from .sql import touch_podcast
+
+bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 
 
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 def generate_feed(podcast_uuid: UUID):
     """Pull podcast and episode data from the db and generate a podcast xml file."""
-    cast: models.Podcast = db.first_or_404(
-        select(models.Podcast)
-        .where(models.Podcast.uuid == podcast_uuid),
+    cast: Podcast = db.first_or_404(
+        select(Podcast)
+        .where(Podcast.uuid == podcast_uuid),
     )
 
     # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
@@ -27,31 +29,31 @@ def generate_feed(podcast_uuid: UUID):
        (last_modified - request.if_modified_since).total_seconds() < 1):
         return Response(status=304)
 
-    p = Podcast(
+    p = podgen.Podcast(
         name=cast.name,
         description=cast.description,
         website=cast.website,
-        category=Category(cast.category),
+        category=podgen.Category(cast.category),
         language=cast.language,
         explicit=cast.explicit,
         image=cast.image,
-        authors=[Person(name=cast.author_name)],
+        authors=[podgen.Person(name=cast.author_name)],
         withhold_from_itunes=bool(cast.withhold_from_itunes),
         last_updated=last_modified,
     )
 
     episodes = db.session.scalars(
-        select(models.Episode)
-        .where(models.Episode.podcast_uuid == podcast_uuid),
+        select(Episode)
+        .where(Episode.podcast_uuid == podcast_uuid),
     )
     for episode in episodes:
-        e = Episode(
+        e = podgen.Episode(
             id=str(episode.uuid),
             title=episode.title,
             summary=episode.summary,
             subtitle=episode.subtitle,
             long_summary=episode.long_summary,
-            media=Media(
+            media=podgen.Media(
                 episode.media_url,
                 size=episode.media_size,
                 type=episode.media_type,
@@ -75,8 +77,8 @@ def feed_head(podcast_uuid: UUID):
     Fill `Last-Modified` to save on data transfer.
     """
     last_modified = db.one_or_404(
-        select(models.Podcast.last_modified)
-        .where(models.Podcast.uuid == podcast_uuid),
+        select(Podcast.last_modified)
+        .where(Podcast.uuid == podcast_uuid),
     )
     response = Response()
     response.last_modified = last_modified.replace(tzinfo=timezone.utc)
@@ -129,7 +131,90 @@ def publish_episode(podcast_uuid: UUID):
         "pub_date":         pub_date,
     }
 
-    db.session.add(models.Episode(**data))
+    db.session.add(Episode(**data))
     touch_podcast(podcast_uuid)
     db.session.commit()
     return jsonify(success=True)
+
+
+@bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])
+def get_episode(podcast_uuid: UUID, episode_id: str):
+    """Fetch details of a specific episode.
+
+    Either an integer episode number,a UUID, or `-1` which returns the latest
+    episode.
+    """
+    try:
+        episode_id = int(episode_id)
+        if episode_id == -1:  # Special case: get the latest episode
+            result = db.first_or_404(
+                select(Episode)
+                .order_by(Episode.pub_date.desc()),
+            )
+        else:
+            result = db.first_or_404(
+                select(Episode)
+                .where(Episode.podcast_uuid == podcast_uuid)
+                .where(Episode.id == episode_id),
+            )
+    except ValueError:  # Not integer-y, so a UUID probably.
+        result = db.first_or_404(
+            select(Episode)
+            .where(Episode.podcast_uuid == podcast_uuid)
+            .where(Episode.uuid == UUID(episode_id)),
+        )
+
+    if result is None:
+        return abort(404)
+    return jsonify(result.as_dict())
+
+
+@bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["PATCH"])
+@authorization_required
+def patch_episode(podcast_uuid: UUID, episode_uuid: UUID):
+    """Just give it a dict with key=rowname value=newvalue. let's get naïve."""
+    json = request.json
+
+    if 'media_duration' in json:
+        json['media_duration'] = timedelta(seconds=json['media_duration'])
+    if 'pub_date' in json:
+        json['pub_date'] = datetime.fromisoformat(json['pub_date'])
+
+    result = db.session.execute(
+        update(Episode)
+        .where(Episode.uuid == episode_uuid)
+        .values(json),
+    )
+    touch_podcast(podcast_uuid)
+    db.session.commit()
+
+    return jsonify(success=True, rows=result.rowcount)
+
+
+@bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["DELETE"])
+@authorization_required
+def delete_episode(podcast_uuid: UUID, episode_uuid: UUID):
+    """Delete an episode."""
+    result = db.session.execute(
+        delete(Episode)
+        .where(Episode.uuid == episode_uuid)
+        .where(Episode.podcast_uuid == podcast_uuid),
+    )
+    touch_podcast(podcast_uuid)
+    db.session.commit()
+
+    if result.rowcount == 0:
+        return abort(404)
+    return jsonify(success=True)
+
+
+@bp.route("/<uuid:podcast_uuid>/episodes", methods=["GET"])
+@authorization_required
+def get_all_episodes(podcast_uuid: UUID):
+    """Get all episodes for a podcast."""
+    results = db.session.scalars(
+        select(Episode)
+        .where(Episode.podcast_uuid == podcast_uuid),
+    )
+
+    return jsonify([episode.as_dict() for episode in results])

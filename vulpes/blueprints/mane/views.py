@@ -6,10 +6,10 @@ from sqlalchemy import select
 from werkzeug.datastructures import FileStorage
 from werkzeug.utils import secure_filename
 
-from ... import db, get_amazon
-from ...connections import get_jmap
+from .jmap import get_jmap
 from .models import PeanutFile
 from .util import randomname, send_file
+from ... import db, get_amazon
 
 bp = Blueprint('mane', __name__)
 

@@ -4,8 +4,8 @@ from random import choice
 from flask import current_app as app
 from sqlalchemy import select
 
-from ... import db
 from .models import PeanutFile
+from ... import db
 
 
 def randomname(ext=None):

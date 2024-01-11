@@ -1,11 +1,12 @@
+from flask import Blueprint, jsonify, render_template
 from flask import current_app as app
-from flask import jsonify, render_template
 from requests import get
 
-from . import bp
 from .utils import multifind
 
 _prefix = 'https://api.twitch.tv/helix'
+
+bp = Blueprint('twitch', __name__, url_prefix="/twitch")
 
 
 @bp.before_app_request

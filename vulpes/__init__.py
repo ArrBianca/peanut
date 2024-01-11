@@ -42,11 +42,6 @@ def create_app(test_config=None):
         app.url_map.default_subdomain = "www"
 
     db.init_app(app)
-    with app.app_context():
-        db.create_all()
-
-    # from . import connections
-    # connections.init_app(app)
 
     from .blueprints import mane, snapcast, twitch
     app.register_blueprint(mane.bp)

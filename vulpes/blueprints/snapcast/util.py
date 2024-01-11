@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
-from uuid import UUID
 
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import update
 
-from ...nitre import Podcast
+from .models import Podcast
+from ... import db
 
 
-def touch_podcast(db: SQLAlchemy, podcast_uuid: UUID):
+def touch_podcast(podcast_uuid):
     """Update the last_modified field for a podcast. Called on cache-invalidating requests."""
     db.session.execute(
         update(Podcast)

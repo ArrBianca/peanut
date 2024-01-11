@@ -35,6 +35,9 @@ ignore = [
     "S113"
 ]
 
+[tool.ruff.isort]
+relative-imports-order = "closest-to-furthest"
+
 [build-system]
 requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"

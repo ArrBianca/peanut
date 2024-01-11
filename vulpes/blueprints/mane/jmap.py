@@ -1,5 +1,7 @@
+from functools import wraps
 from json import dumps
 
+from flask import current_app, g
 from requests import get, post
 
 
@@ -180,3 +182,26 @@ class JMAPClient:
         )
         res.raise_for_status()
         return res.json()
+
+
+def get_jmap():
+    """Create or return the configured JMAPClient."""
+    if 'jmap' not in g:
+        g.jmap = JMAPClient(
+            current_app.config["JMAP_HOSTNAME"],
+            current_app.config["JMAP_USERNAME"],
+            current_app.config["JMAP_TOKEN"],
+        )
+
+    return g.jmap
+
+
+def uses_jmap(func):
+    """Wrap a function that needs to use JMAP."""
+
+    @wraps(func)
+    def inner(*args, **kwargs):
+        client = get_jmap()
+        return func(client, *args, **kwargs)
+
+    return inner

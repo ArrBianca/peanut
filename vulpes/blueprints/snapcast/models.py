@@ -2,18 +2,10 @@ from datetime import datetime, timedelta, timezone
 from typing import Optional
 from uuid import UUID
 
-from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint, ForeignKey
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column
 
-
-class Base(DeclarativeBase):
-    """The DeclarativeBase you have to use in sqlalchemy."""
-
-    pass
-
-
-db = SQLAlchemy(model_class=Base)
+from ... import db
 
 
 class DatetimeFormattingModel:
@@ -93,19 +85,3 @@ class Episode(DatetimeFormattingModel, db.Model):
         CheckConstraint('title IS NOT NULL OR summary IS NOT NULL',
                         name='title_summary_check'),
     )
-
-
-class PeanutFile(db.Model):
-    """ORM Mapping for the database's `peanut_file` table."""
-
-    __tablename__ = 'peanut_file'
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    filename: Mapped[Optional[str]]
-    size: Mapped[Optional[int]]
-    origin_name: Mapped[Optional[str]]
-    tstamp: Mapped[Optional[datetime]]
-
-    def __init__(self, **kwargs):
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)

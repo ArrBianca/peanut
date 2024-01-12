@@ -6,7 +6,7 @@ from .utils import multifind
 
 _prefix = 'https://api.twitch.tv/helix'
 
-bp = Blueprint('twitch', __name__, url_prefix="/twitch")
+bp = Blueprint('twitch', __name__, url_prefix="/twitch", template_folder='templates')
 
 
 @bp.before_app_request
@@ -27,7 +27,7 @@ def names(game):
     links = multifind(res, "channel", "name")
     statuses = multifind(res, "channel", "status")
 
-    return render_template("twitch/gamelisting.html",
+    return render_template("gamelisting.html",
                            title=game,
                            cols=[streamers, viewers, links],
                            stats=statuses)
@@ -44,7 +44,7 @@ def following(username):
     links = multifind(res, "user_login")
     statuses = multifind(res, "title")
 
-    return render_template("twitch/followinglisting.html",
+    return render_template("followinglisting.html",
                            title=username,
                            cols=[streamers, games, viewers, links],
                            stats=statuses)

@@ -47,10 +47,7 @@ Filesize: {len(file_data) / 1024 / 1024:.2F}MB
         "File for ya!",
         body,
     )
-    jmap_client.attach_file_to_message(
-        draft,
-        file_data,
-        filename)
+    jmap_client.attach_file_to_message(draft, file_data, filename)
     jmap_client.send(draft)
 
 

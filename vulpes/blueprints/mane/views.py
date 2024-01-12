@@ -11,7 +11,7 @@ from .models import PeanutFile
 from .util import get_amazon, randomname, send_file
 from ... import db
 
-bp = Blueprint('mane', __name__)
+bp = Blueprint('mane', __name__, template_folder='templates')
 
 
 @bp.route('/')

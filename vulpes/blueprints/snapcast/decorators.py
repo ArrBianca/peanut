@@ -3,8 +3,8 @@ from functools import wraps
 from flask import abort, request
 from sqlalchemy import select
 
-from ... import db
 from .models import Podcast
+from ... import db
 
 
 def authorization_required(func):

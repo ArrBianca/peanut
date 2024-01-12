@@ -188,9 +188,9 @@ def get_jmap():
     """Create or return the configured JMAPClient."""
     if 'jmap' not in g:
         g.jmap = JMAPClient(
-            current_app.config["JMAP_HOSTNAME"],
-            current_app.config["JMAP_USERNAME"],
-            current_app.config["JMAP_TOKEN"],
+            current_app.config['JMAP']['HOSTNAME'],
+            current_app.config['JMAP']['USERNAME'],
+            current_app.config['JMAP']['TOKEN'],
         )
 
     return g.jmap

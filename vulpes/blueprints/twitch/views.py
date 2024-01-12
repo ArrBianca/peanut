@@ -13,8 +13,8 @@ bp = Blueprint('twitch', __name__, url_prefix="/twitch")
 def a():
     """Add the twitch authorization to all the requests made in the views below."""
     app.config['_headers'] = {'Accept': 'application/vnd.twitchtv.v5+json',
-                              'Client-ID': app.config['TWITCH_CLIENT_ID'],
-                              'Authorization': "Bearer {}".format(app.config['TWITCH_TOKEN'])}
+                              'Client-ID': app.config['TWITCH']['CLIENT_ID'],
+                              'Authorization': "Bearer {}".format(app.config['TWITCH']['TOKEN'])}
 
 
 @bp.route("/game/<game>")
@@ -91,7 +91,7 @@ def followed_streams(name):
     my_uid = resp['data'][0]['id']
 
     h = app.config['_headers']
-    h['Authorization'] = f"Bearer {app.config['TWITCH_USER_TOKEN']}"
+    h['Authorization'] = f"Bearer {app.config['TWITCH']['USER_TOKEN']}"
     resp = get(f"{_prefix}/channels/followed",
                params={'user_id': my_uid, 'first': 100},
                headers=h)

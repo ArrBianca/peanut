@@ -13,7 +13,7 @@ from ... import db
 def randomname(ext=None):
     """Generate a new unique random short name for a file."""
     randname = ''.join([choice(string.ascii_lowercase)
-                       for _ in range(app.config['FILE_NAME_LENGTH'])])
+                       for _ in range(app.config['FOX']['FILE_NAME_LENGTH'])])
     if ext is not None:
         randname = randname + '.' + ext
 
@@ -59,5 +59,7 @@ def get_amazon():
     if 's3' not in g:
         g.s3 = boto3.client(
             's3',
+            access_key_id=app.config['S3']['ACCESS_KEY'],
+            secret_access_key=app.config['S3']['SECRET_KEY'],
         )
     return g.s3

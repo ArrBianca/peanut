@@ -1,8 +1,7 @@
 import contextlib
 import os
 
-import boto3
-from flask import Flask, g, render_template
+from flask import Flask, render_template
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
@@ -53,10 +52,3 @@ def create_app(test_config=None):
         return render_template("fower-oh-fower.html"), 404
 
     return app
-
-
-def get_amazon():
-    """Get an s3 connection."""
-    if 's3' not in g:
-        g.s3 = boto3.client('s3')
-    return g.s3

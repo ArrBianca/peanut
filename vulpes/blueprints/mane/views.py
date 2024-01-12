@@ -8,8 +8,8 @@ from werkzeug.utils import secure_filename
 
 from .jmap import get_jmap
 from .models import PeanutFile
-from .util import randomname, send_file
-from ... import db, get_amazon
+from .util import get_amazon, randomname, send_file
+from ... import db
 
 bp = Blueprint('mane', __name__)
 

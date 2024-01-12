@@ -1,7 +1,9 @@
 import string
 from random import choice
 
+import boto3
 from flask import current_app as app
+from flask import g
 from sqlalchemy import select
 
 from .models import PeanutFile
@@ -50,3 +52,12 @@ Filesize: {len(file_data) / 1024 / 1024:.2F}MB
         file_data,
         filename)
     jmap_client.send(draft)
+
+
+def get_amazon():
+    """Get an s3 connection."""
+    if 's3' not in g:
+        g.s3 = boto3.client(
+            's3',
+        )
+    return g.s3

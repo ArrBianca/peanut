@@ -13,7 +13,6 @@ class JMAPClient:
         self.token = token
         self._session = None
         self._account_id = None
-        # You need an Identity to send mail. _apparently_
         self._identity_id = None
         self._upload_url = None
 
@@ -100,9 +99,8 @@ class JMAPClient:
         #   list of matching ids -> First one
         return response['methodResponses'][0][1]['ids'][0]
 
-    def prepare_plaintext_email(self, to_addr: str,
-                                subject: str, body: str) -> dict:
-        """Prepare a dictionary containing the required fields to send aplaintext email message."""
+    def prepare_plaintext_email(self, to_addr: str, subject: str, body: str) -> dict:
+        """Prepare a dictionary containing the required fields to send a plaintext email message."""
         return {
             "from": [{"email": self.username}],
             "to": [{"email": to_addr}],
@@ -115,8 +113,7 @@ class JMAPClient:
             "textBody": [{"partId": "body", "type": "text/plain"}],
         }
 
-    def attach_file_to_message(self, draft: dict,
-                               file_data: bytes, filename: str) -> None:
+    def attach_file_to_message(self, draft: dict, file_data: bytes, filename: str) -> None:
         """Upload an attachment and append its date to the message draft."""
         uploaded = self.file_upload(file_data)
         if 'attachments' not in draft:

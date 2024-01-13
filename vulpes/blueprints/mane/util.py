@@ -51,7 +51,7 @@ def get_amazon():
     if 's3' not in g:
         g.s3 = boto3.client(
             's3',
-            access_key_id=app.config['S3']['ACCESS_KEY'],
-            secret_access_key=app.config['S3']['SECRET_KEY'],
+            aws_access_key_id=app.config['S3']['ACCESS_KEY'],
+            aws_secret_access_key=app.config['S3']['SECRET_KEY'],
         )
     return g.s3

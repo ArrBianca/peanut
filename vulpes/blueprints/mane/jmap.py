@@ -1,4 +1,3 @@
-from functools import wraps
 from json import dumps
 
 from flask import current_app, g
@@ -194,14 +193,3 @@ def get_jmap():
         )
 
     return g.jmap
-
-
-def uses_jmap(func):
-    """Wrap a function that needs to use JMAP."""
-
-    @wraps(func)
-    def inner(*args, **kwargs):
-        client = get_jmap()
-        return func(client, *args, **kwargs)
-
-    return inner

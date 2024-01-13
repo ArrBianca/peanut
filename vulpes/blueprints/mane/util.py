@@ -26,7 +26,6 @@ def randomname(ext=None):
     return randname
 
 
-# @uses_jmap
 def send_file(jmap_client, filename, file_data):
     """Email June a file!
 

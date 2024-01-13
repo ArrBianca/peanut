@@ -5,11 +5,11 @@
     <meta charset="UTF-8">
     <link rel="icon" type="img/png" href="/static/twitch/twitchicon.png">
     <link rel="stylesheet" type="text/css" href="/static/twitch/hoverbuddy.css">
+    <link rel="stylesheet" type="text/css" href="/static/main.css">
     <title>{{ title }}</title>
 </head>
 <body>
-
-<table align="center">
+<table class="centered-thing">
   {% for counter in range(cols[0]|length) %}
   <tr>
     {%- for col in cols -%}

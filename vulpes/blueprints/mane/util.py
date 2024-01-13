@@ -29,7 +29,7 @@ def randomname(ext=None):
 def send_file(jmap_client, filename, file_data):
     """Email June a file!
 
-    :type jmap_client: vulpes.jmap.JMAPClient
+    :type jmap_client: vulpes.blueprints.mane.jmap.JMAPClient
     :type filename: str
     :type file_data: bytes
     """
@@ -41,11 +41,7 @@ Original filename: {filename}
 Filesize: {len(file_data) / 1024 / 1024:.2F}MB
 
 """
-    draft = jmap_client.prepare_plaintext_email(
-        "june@peanut.one",
-        "File for ya!",
-        body,
-    )
+    draft = jmap_client.prepare_plaintext_email("june@peanut.one", "File for ya!", body)
     jmap_client.attach_file_to_message(draft, file_data, filename)
     jmap_client.send(draft)
 

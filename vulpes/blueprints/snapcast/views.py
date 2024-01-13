@@ -5,9 +5,8 @@ import podgen
 from flask import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, select, update
 
-from .decorators import authorization_required
 from .models import Episode, Podcast
-from .util import touch_podcast
+from .util import authorization_required, touch_podcast
 from ... import db
 
 bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')

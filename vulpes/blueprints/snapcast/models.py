@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta, timezone
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 from sqlalchemy import CheckConstraint, ForeignKey
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from ... import db
 
@@ -51,6 +51,7 @@ class Podcast(DatetimeFormattingModel, db.Model):
     auth_token: Mapped[UUID]
     last_modified: Mapped[Optional[datetime]]
     is_serial: Mapped[Optional[bool]]
+    episodes: Mapped[List["Episode"]] = relationship(back_populates="podcast")
 
     def __init__(self, **kwargs):
         for attr, value in kwargs.items():
@@ -65,6 +66,7 @@ class Episode(DatetimeFormattingModel, db.Model):
     id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[UUID]
     podcast_uuid = mapped_column(ForeignKey(Podcast.uuid))
+    podcast: Mapped["Podcast"] = relationship(back_populates="episodes")
     title: Mapped[Optional[str]]
     summary: Mapped[Optional[str]]
     subtitle: Mapped[Optional[str]]

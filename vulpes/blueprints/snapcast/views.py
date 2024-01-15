@@ -41,11 +41,7 @@ def generate_feed(podcast_uuid: UUID):
         last_updated=last_modified,
     )
 
-    episodes = db.session.scalars(
-        select(Episode)
-        .where(Episode.podcast_uuid == podcast_uuid),
-    )
-    for episode in episodes:
+    for episode in cast.episodes:
         e = podgen.Episode(
             id=str(episode.uuid),
             title=episode.title,
@@ -75,7 +71,7 @@ def feed_head(podcast_uuid: UUID):
 
     Fill `Last-Modified` to save on data transfer.
     """
-    last_modified = db.one_or_404(
+    last_modified: Podcast = db.one_or_404(
         select(Podcast.last_modified)
         .where(Podcast.uuid == podcast_uuid),
     )
@@ -146,18 +142,18 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
     try:
         episode_id = int(episode_id)
         if episode_id == -1:  # Special case: get the latest episode
-            result = db.first_or_404(
+            result: Episode = db.first_or_404(
                 select(Episode)
                 .order_by(Episode.pub_date.desc()),
             )
         else:
-            result = db.first_or_404(
+            result: Episode = db.first_or_404(
                 select(Episode)
                 .where(Episode.podcast_uuid == podcast_uuid)
                 .where(Episode.id == episode_id),
             )
     except ValueError:  # Not integer-y, so a UUID probably.
-        result = db.first_or_404(
+        result: Episode = db.first_or_404(
             select(Episode)
             .where(Episode.podcast_uuid == podcast_uuid)
             .where(Episode.uuid == UUID(episode_id)),

@@ -72,12 +72,10 @@ class JMAPClient:
             ],
         })
 
-        identity_id = next(
-            filter(
-                lambda i: i["email"] == self.username,
-                ident_result["methodResponses"][0][1]["list"],
-            ),
-        )["id"]
+        identity_id = next(filter(
+            lambda i: i["email"] == self.username,
+            ident_result["methodResponses"][0][1]["list"],
+        ))["id"]
 
         self._identity_id = str(identity_id)
         return self._identity_id

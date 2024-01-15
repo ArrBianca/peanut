@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vulpes"
-version = "1.0.0"
+version = "1.0.1"
 description = ""
 authors = ["June <june@peanut.one>"]
 readme = "README.md"
@@ -21,9 +21,11 @@ optional = true
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.5.0"
 ruff = "^0.1.11"
+alembic = "^1.13.1"
 
 [tool.ruff]
 line-length = 100
+exclude = ["nitre/"]
 
 [tool.ruff.lint]
 select = [  # Brought over whole-cloth from another project of mine.

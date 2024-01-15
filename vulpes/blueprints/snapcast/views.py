@@ -19,6 +19,9 @@ def generate_feed(podcast_uuid: UUID):
         select(Podcast)
         .where(Podcast.uuid == podcast_uuid),
     )
+    print(cast.categories)
+    for cat in cast.categories:
+        print(repr(cat.__dict__))
 
     # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
     last_modified: datetime = cast.last_modified.replace(tzinfo=timezone.utc)
@@ -32,7 +35,7 @@ def generate_feed(podcast_uuid: UUID):
         name=cast.name,
         description=cast.description,
         website=cast.website,
-        category=podgen.Category(cast.category),
+        category=podgen.Category(cast.categories[0].cat, cast.categories[0].sub),
         language=cast.language,
         explicit=cast.explicit,
         image=cast.image,
@@ -40,6 +43,8 @@ def generate_feed(podcast_uuid: UUID):
         withhold_from_itunes=bool(cast.withhold_from_itunes),
         last_updated=last_modified,
     )
+    # Assign categories by looping through podcast.categories, as it could be
+    # empy
 
     for episode in cast.episodes:
         e = podgen.Episode(

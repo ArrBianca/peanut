@@ -46,7 +46,7 @@ class Podcast(DatetimeFormattingModel, db.Model):
     copyright: Mapped[Optional[str]]
     language: Mapped[str] = mapped_column(default="en-US")
     feed_url: Mapped[Optional[str]]
-    category: Mapped[Optional[str]]
+    categories: Mapped[List["Category"]] = relationship()
     withhold_from_itunes: Mapped[bool] = mapped_column(default=False)
     auth_token: Mapped[UUID]
     last_modified: Mapped[Optional[datetime]]
@@ -87,3 +87,14 @@ class Episode(DatetimeFormattingModel, db.Model):
         CheckConstraint('title IS NOT NULL OR summary IS NOT NULL',
                         name='title_summary_check'),
     )
+
+
+class Category(db.Model):
+    """ORM Mapping for the database's `category` table."""
+
+    __tablename__ = 'category'
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    podcast_id: Mapped[int] = mapped_column(ForeignKey("podcast.id"))
+    cat: Mapped[str]
+    sub: Mapped[Optional[str]]

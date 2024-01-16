@@ -41,9 +41,9 @@ def generate_feed(podcast_uuid: UUID):
             'sub': category.sub,
         })
     p.language(cast.language)
-    p.podcast.itunes_explicit('yes' if cast.explicit else None)
     p.podcast.itunes_image(cast.image)
-    p.author({'name': cast.author_name})
+    # p.author({'name': cast.author_name})
+    p.podcast.itunes_author(cast.author_name)
     p.podcast.itunes_block(cast.withhold_from_itunes)
     p.podcast.itunes_explicit('yes' if cast.explicit else 'no')
     p.lastBuildDate(last_modified)

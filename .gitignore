@@ -2,7 +2,8 @@
 .vscode/
 .fleet/
 
-instance/
+instance/*.sqlite
+instance/config.toml
 venv/
 dist/
 

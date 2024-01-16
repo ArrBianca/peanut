@@ -9,7 +9,10 @@ from ... import db
 
 
 class DatetimeFormattingModel:
-    """Parent class that allows a Model to turn into a jsonify-able dictionary."""
+    """Parent class that allows a Model to turn into a jsonify-able dictionary.
+
+    Add to the converter here for any more non-serializable data types.
+    """
 
     __table__ = None
 

@@ -27,9 +27,13 @@ def create_app(test_config=None):
         SQLALCHEMY_DATABASE_URI=os.path.join("sqlite:///" + app.instance_path, 'nitre.sqlite'),
     )
 
+    # load the basic config file
+    app.config.from_file('dev.config.toml', load=tomli.load, text=False)
+
     if test_config is None:
         # load the instance config, if it exists, when not testing
-        app.config.from_file('config.toml', load=tomli.load, text=False)
+        # app.config.from_file('config.toml', load=tomli.load, text=False)
+        pass
     else:
         # load the test config if passed in
         app.config.from_mapping(test_config)

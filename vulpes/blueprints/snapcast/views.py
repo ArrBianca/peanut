@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-import podgen
+from feedgen.feed import FeedGenerator
 from flask import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, select, update
 
@@ -12,6 +12,7 @@ from ... import db
 bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 
 
+# noinspection PyUnresolvedReferences
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 def generate_feed(podcast_uuid: UUID):
     """Pull podcast and episode data from the db and generate a podcast xml file."""
@@ -19,9 +20,6 @@ def generate_feed(podcast_uuid: UUID):
         select(Podcast)
         .where(Podcast.uuid == podcast_uuid),
     )
-    print(cast.categories)
-    for cat in cast.categories:
-        print(repr(cat.__dict__))
 
     # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
     last_modified: datetime = cast.last_modified.replace(tzinfo=timezone.utc)
@@ -31,41 +29,45 @@ def generate_feed(podcast_uuid: UUID):
        (last_modified - request.if_modified_since).total_seconds() < 1):
         return Response(status=304)
 
-    p = podgen.Podcast(
-        name=cast.name,
-        description=cast.description,
-        website=cast.website,
-        category=podgen.Category(cast.categories[0].cat, cast.categories[0].sub),
-        language=cast.language,
-        explicit=cast.explicit,
-        image=cast.image,
-        authors=[podgen.Person(name=cast.author_name)],
-        withhold_from_itunes=bool(cast.withhold_from_itunes),
-        last_updated=last_modified,
-    )
-    # Assign categories by looping through podcast.categories, as it could be
-    # empy
+    p = FeedGenerator()
+    p.load_extension('podcast')
+
+    p.title(cast.name)
+    p.description(cast.description)
+    p.link(href=cast.website)
+    for category in cast.categories:
+        p.podcast.itunes_category({
+            'cat': category.cat,
+            'sub': category.sub,
+        })
+    p.language(cast.language)
+    p.podcast.itunes_explicit('yes' if cast.explicit else None)
+    p.podcast.itunes_image(cast.image)
+    p.author({'name': cast.author_name})
+    p.podcast.itunes_block(cast.withhold_from_itunes)
+    p.podcast.itunes_explicit('yes' if cast.explicit else 'no')
+    p.lastBuildDate(last_modified)
 
     for episode in cast.episodes:
-        e = podgen.Episode(
-            id=str(episode.uuid),
-            title=episode.title,
-            summary=episode.summary,
-            subtitle=episode.subtitle,
-            long_summary=episode.long_summary,
-            media=podgen.Media(
-                episode.media_url,
-                size=episode.media_size,
-                type=episode.media_type,
-                duration=episode.media_duration,
-            ),
-            publication_date=episode.pub_date.replace(tzinfo=timezone.utc),
-            link=episode.link,
-            image=episode.episode_art,
-        )
-        p.add_episode(e)
+        episode: Episode = episode
+        e = p.add_item()
 
-    response = Response(p.rss_str(), mimetype='text/xml')
+        e.id(str(episode.uuid))
+        e.title(episode.title)
+        e.podcast.itunes_subtitle(episode.subtitle)
+        e.description(episode.long_summary)
+        e.enclosure(
+            episode.media_url,
+            episode.media_size,
+            episode.media_type,
+        )
+        if episode.media_duration:
+            e.podcast.itunes_duration(int(episode.media_duration.total_seconds()))
+        e.pubDate(episode.pub_date.replace(tzinfo=timezone.utc))
+        e.link(href=episode.link)
+        e.podcast.itunes_image(episode.episode_art)
+
+    response = Response(p.rss_str(pretty=True), mimetype='text/xml')
     response.last_modified = last_modified
     return response
 
@@ -157,7 +159,7 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
                 .where(Episode.podcast_uuid == podcast_uuid)
                 .where(Episode.id == episode_id),
             )
-    except ValueError:  # Not integer-y, so a UUID probably.
+    except ValueError:  # Not integer-y, so a UUID. Probably.
         result: Episode = db.first_or_404(
             select(Episode)
             .where(Episode.podcast_uuid == podcast_uuid)

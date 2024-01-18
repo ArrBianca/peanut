@@ -88,7 +88,7 @@ class Episode(FeedItem, DatetimeFormattingModel, db.Model):
     def __init__(self, **kwargs):
         for attr, value in kwargs.items():
             setattr(self, attr, value)
-        super().__init__()
+        # super().__init__()
 
 
 class Category(DatetimeFormattingModel, db.Model):

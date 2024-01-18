@@ -221,6 +221,8 @@ class PodcastFeed(JXElement):
         Set this value to current when adding or updating an item or any field
         of the podcast.
         """
+        self.is_serial: bool = False
+        """Whether the podcast is a serial type."""
         self.itunes_block: Optional[bool] = False
         """Prevent this podcast from appearing in the iTunes directory."""
 
@@ -256,6 +258,7 @@ class PodcastFeed(JXElement):
         self.sub_elem("copyright", text=self.copyright)
         self.sub_elem("link", text=self.link)
         self.sub_elem("language", text=self.language)
+        self.sub_elem("itunes:type", text="serial" if self.is_serial else "episodic")
         self.sub_elem("itunes:block", text="yes" if self.itunes_block else None)
 
         # Category processing.

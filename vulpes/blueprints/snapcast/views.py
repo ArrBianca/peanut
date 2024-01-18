@@ -129,8 +129,6 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
             .where(Episode.uuid == UUID(episode_id)),
         )
 
-    if result is None:
-        return abort(404)
     return jsonify(result.as_dict())
 
 

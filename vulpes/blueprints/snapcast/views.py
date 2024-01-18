@@ -22,10 +22,10 @@ def generate_feed(podcast_uuid: UUID):
         .options(joinedload('*')),
     )
 
-    # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
+    # The caveat to sqlite: It stores datetimes as naive.
     cast.last_build_date = cast.last_build_date.replace(tzinfo=timezone.utc)
-    # The database column stores microseconds which aren't included in the
-    # request. If they're just about equal we don't update anything.
+    # The database column also stores microseconds which aren't included in
+    # the request. If they're just about equal we don't update anything.
     if ((request.if_modified_since is not None) and
        (cast.last_build_date - request.if_modified_since).total_seconds() < 1):
         return Response(status=304)

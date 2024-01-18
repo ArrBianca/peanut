@@ -1,9 +1,9 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from feedgen.feed import FeedGenerator
 from flask import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, select, update
+from sqlalchemy.orm import joinedload
 
 from .models import Episode, Podcast
 from .util import authorization_required, touch_podcast
@@ -12,63 +12,26 @@ from ... import db
 bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
 
 
-# noinspection PyUnresolvedReferences
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
 def generate_feed(podcast_uuid: UUID):
     """Pull podcast and episode data from the db and generate a podcast xml file."""
+    # noinspection PyTypeChecker
     cast: Podcast = db.first_or_404(
         select(Podcast)
-        .where(Podcast.uuid == podcast_uuid),
+        .where(Podcast.uuid == podcast_uuid)
+        .options(joinedload('*')),
     )
 
-    # The caveat to sqlalchemy and sqlite: It stores datetimes as naive.
-    last_modified: datetime = cast.last_modified.replace(tzinfo=timezone.utc)
-    # The database column stores microseconds which aren't included in the
-    # request. If they're just about equal we don't update anything.
+    # The caveat to sqlite: It stores datetimes as naive.
+    cast.last_build_date = cast.last_build_date.replace(tzinfo=timezone.utc)
+    # The database column also stores microseconds which aren't included in
+    # the request. If they're just about equal we don't update anything.
     if ((request.if_modified_since is not None) and
-       (last_modified - request.if_modified_since).total_seconds() < 1):
+       (cast.last_build_date - request.if_modified_since).total_seconds() < 1):
         return Response(status=304)
 
-    p = FeedGenerator()
-    p.load_extension('podcast')
-
-    p.title(cast.name)
-    p.description(cast.description)
-    p.link(href=cast.website)
-    for category in cast.categories:
-        p.podcast.itunes_category({
-            'cat': category.cat,
-            'sub': category.sub,
-        })
-    p.language(cast.language)
-    p.podcast.itunes_image(cast.image)
-    # p.author({'name': cast.author_name})
-    p.podcast.itunes_author(cast.author_name)
-    p.podcast.itunes_block(cast.withhold_from_itunes)
-    p.podcast.itunes_explicit('yes' if cast.explicit else 'no')
-    p.lastBuildDate(last_modified)
-
-    for episode in cast.episodes:
-        episode: Episode = episode
-        e = p.add_item()
-
-        e.id(str(episode.uuid))
-        e.title(episode.title)
-        e.podcast.itunes_subtitle(episode.subtitle)
-        e.description(episode.long_summary)
-        e.enclosure(
-            episode.media_url,
-            episode.media_size,
-            episode.media_type,
-        )
-        if episode.media_duration:
-            e.podcast.itunes_duration(int(episode.media_duration.total_seconds()))
-        e.pubDate(episode.pub_date.replace(tzinfo=timezone.utc))
-        e.link(href=episode.link)
-        e.podcast.itunes_image(episode.episode_art)
-
-    response = Response(p.rss_str(pretty=True), mimetype='text/xml')
-    response.last_modified = last_modified
+    response = Response(cast.build(), mimetype='text/xml')
+    response.last_modified = cast.last_build_date
     return response
 
 
@@ -79,7 +42,7 @@ def feed_head(podcast_uuid: UUID):
     Fill `Last-Modified` to save on data transfer.
     """
     last_modified: Podcast = db.one_or_404(
-        select(Podcast.last_modified)
+        select(Podcast.last_build_date)
         .where(Podcast.uuid == podcast_uuid),
     )
     response = Response()
@@ -166,8 +129,6 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
             .where(Episode.uuid == UUID(episode_id)),
         )
 
-    if result is None:
-        return abort(404)
     return jsonify(result.as_dict())
 
 
@@ -202,11 +163,12 @@ def delete_episode(podcast_uuid: UUID, episode_uuid: UUID):
         .where(Episode.uuid == episode_uuid)
         .where(Episode.podcast_uuid == podcast_uuid),
     )
-    touch_podcast(podcast_uuid)
-    db.session.commit()
 
     if result.rowcount == 0:
         return abort(404)
+    touch_podcast(podcast_uuid)
+    db.session.commit()
+
     return jsonify(success=True)
 
 

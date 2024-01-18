@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "vulpes"
-version = "1.0.1"
+version = "2.0.0"
 description = ""
 authors = ["June <june@peanut.one>"]
 readme = "README.md"
@@ -9,7 +9,6 @@ readme = "README.md"
 python = "^3.10.0"
 alembic = "^1.13.1"
 boto3 = "^1.33.7"
-feedgen = "^1.0.0"
 Flask = "^3.0.0"
 flask-sqlalchemy = "^3.1.1"
 requests = "^2.31.0"
@@ -27,13 +26,14 @@ exclude = ["nitre/"]
 [tool.ruff.lint]
 select = [  # Brought over whole-cloth from another project of mine.
     "E", "E501", "I", "D",
-    "N", "F", "UP",
+    "N", "F", "UP", "TD", "W",
     "BLE", "B", "COM", "C4",
     "DTZ", "RET", "SLF", "SIM",
 ]
 ignore = [
     "D100", "D104", "D107", "D203", "D213", "D400",
-    "S113"
+    "S113",
+    "TD003",
 ]
 
 [tool.ruff.isort]

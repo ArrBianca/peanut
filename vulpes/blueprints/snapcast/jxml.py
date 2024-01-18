@@ -212,7 +212,7 @@ class PodcastFeed(JXElement):
         """URL pointing to the website for the podcast."""
         self.copyright: Optional[str] = None
         """A human-readable copyright string."""
-        self.language: Optional[str] = None
+        self.language: Optional[str] = "en"
         """ISO639 two-letter language code."""
 
         self.last_build_date: Optional[datetime] = None

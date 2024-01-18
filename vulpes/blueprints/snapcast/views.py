@@ -163,11 +163,12 @@ def delete_episode(podcast_uuid: UUID, episode_uuid: UUID):
         .where(Episode.uuid == episode_uuid)
         .where(Episode.podcast_uuid == podcast_uuid),
     )
-    touch_podcast(podcast_uuid)
-    db.session.commit()
 
     if result.rowcount == 0:
         return abort(404)
+    touch_podcast(podcast_uuid)
+    db.session.commit()
+
     return jsonify(success=True)
 
 

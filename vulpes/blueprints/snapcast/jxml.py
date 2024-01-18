@@ -376,8 +376,7 @@ class PodcastFeed(JXElement):
         # Atom self-link
         if self.feed_url is not None:
             self.sub_elem("atom:link", {
-                # 'href': self.feed_url,
-                'href': 'https://files.peanut.one/serve/snap.xml',
+                'href': self.feed_url,
                 'rel': 'self',
                 'type': 'application/rss+xml',
             })

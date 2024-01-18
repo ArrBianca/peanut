@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from feedgen.feed import FeedGenerator
 from flask import Blueprint, Response, abort, jsonify, request
 from sqlalchemy import delete, select, update
 
@@ -29,46 +28,8 @@ def generate_feed(podcast_uuid: UUID):
        (last_modified - request.if_modified_since).total_seconds() < 1):
         return Response(status=304)
 
-    p = FeedGenerator()
-    p.load_extension('podcast')
-
-    p.title(cast.name)
-    p.description(cast.description)
-    p.link(href=cast.website)
-    for category in cast.categories:
-        p.podcast.itunes_category({
-            'cat': category.cat,
-            'sub': category.sub,
-        })
-    p.language(cast.language)
-    p.podcast.itunes_image(cast.image)
-    # p.author({'name': cast.author_name})
-    p.podcast.itunes_author(cast.author_name)
-    p.podcast.itunes_block(cast.withhold_from_itunes)
-    p.podcast.itunes_explicit('yes' if cast.explicit else 'no')
-    p.lastBuildDate(last_modified)
-
-    for episode in cast.episodes:
-        episode: Episode = episode
-        e = p.add_item()
-
-        e.id(str(episode.uuid))
-        e.title(episode.title)
-        e.podcast.itunes_subtitle(episode.subtitle)
-        e.description(episode.long_summary)
-        e.enclosure(
-            episode.media_url,
-            episode.media_size,
-            episode.media_type,
-        )
-        if episode.media_duration:
-            e.podcast.itunes_duration(int(episode.media_duration.total_seconds()))
-        e.pubDate(episode.pub_date.replace(tzinfo=timezone.utc))
-        e.link(href=episode.link)
-        e.podcast.itunes_image(episode.episode_art)
-
-    response = Response(p.rss_str(pretty=True), mimetype='text/xml')
-    response.last_modified = last_modified
+    response = Response(cast.build(pretty=True), mimetype='text/xml')
+    response.last_modified = cast.last_build_date
     return response
 
 

@@ -230,7 +230,7 @@ class PodcastFeed(JXElement):
       Set this value to the current time in your database when adding or
       updating an item or any field of the podcast.
     * To allegedly improve caching, ``feed_url`` should be set to the same URL
-      the feed is being accessed from.
+      the feed is being accessed at.
     * ``copyright`` is a human-readable string with copyright info for the
       podcast. As usual, you don't need to specifically claim copyright to have
       your work protected. Still useful for completeness or to release the

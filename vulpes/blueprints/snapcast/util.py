@@ -32,5 +32,5 @@ def touch_podcast(podcast_uuid):
     db.session.execute(
         update(Podcast)
         .where(Podcast.uuid == podcast_uuid)
-        .values({Podcast.last_modified: datetime.now(timezone.utc)}),
+        .values({Podcast.last_build_date: datetime.now(timezone.utc)}),
     )

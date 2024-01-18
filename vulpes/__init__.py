@@ -52,6 +52,7 @@ def create_app(test_config=None):
     app.register_blueprint(snapcast.bp)
     app.register_blueprint(twitch.bp)
 
+    # noinspection PyUnusedLocal
     @app.errorhandler(404)
     def fower_oh_fower(e):
         return render_template("fower-oh-fower.html"), 404

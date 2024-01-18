@@ -38,7 +38,8 @@ class FeedItem(JXElement):
                  title: str,
                  media_url: str,
                  media_size: int,
-                 media_type: str, **kwargs) -> None:
+                 media_type: str,
+                 uuid: UUID | None, **kwargs) -> None:
         self.title: str = title
         """The episode's title"""
         self.subtitle: Optional[str] = None
@@ -50,7 +51,7 @@ class FeedItem(JXElement):
          but a description is, it is used to fill the space. If this is not
          needed, set subtitle to empty explicitly.
          """
-        self.uuid: Optional[str | UUID] = None
+        self.uuid: UUID = uuid
         """The episode's UUID.
 
         This is used to identify the episode and should not change. it is

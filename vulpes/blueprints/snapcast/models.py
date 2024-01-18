@@ -81,7 +81,7 @@ class Episode(FeedItem, DatetimeFormattingModel, db.Model):
     pub_date: Mapped[datetime]
     link: Mapped[Optional[str]]
     image: Mapped[Optional[str]]
-    episode_type: Mapped[Literal["full", "trailer", "bonus"]] = mapped_column(default='full')
+    episode_type: Mapped[Literal["full", "trailer", "bonus"]] = mapped_column(default=None)
     season: Mapped[Optional[int]]
     episode: Mapped[Optional[int]]
 

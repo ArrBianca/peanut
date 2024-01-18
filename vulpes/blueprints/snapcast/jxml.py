@@ -225,6 +225,10 @@ class PodcastFeed(JXElement):
         """Whether the podcast is a serial type."""
         self.itunes_block: Optional[bool] = False
         """Prevent this podcast from appearing in the iTunes directory."""
+        self.new_feed_url: Optional[str] = None
+        """URL of a replacement RSS feed for this podcast. Careful."""
+        self.complete: Optional[bool] = False
+        """Flag marking the feed as complete. VERY CAREFUL."""
 
         for kwarg in kwargs:
             setattr(self, kwarg, kwargs[kwarg])
@@ -260,6 +264,8 @@ class PodcastFeed(JXElement):
         self.sub_elem("language", text=self.language)
         self.sub_elem("itunes:type", text="serial" if self.is_serial else "episodic")
         self.sub_elem("itunes:block", text="yes" if self.itunes_block else None)
+        self.sub_elem("itunes:new-feed-url", text=self.new_feed_url)
+        self.sub_elem("itunes:complete", text="Yes" if self.complete else None)
 
         # Category processing.
         # TODO(June): clean this up lol.

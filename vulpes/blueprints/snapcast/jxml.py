@@ -154,19 +154,16 @@ class FeedItem(JXElement):
         # self.sub_element("itunes:explicit", text='yes' if self.explicit else 'no')
 
         # Some troublemakers
-        if md := self.media_duration is not None:
-            if isinstance(md, timedelta):
-                md = int(self.media_duration.total_seconds())
-            self.sub_elem("itunes:duration", text=md)
+        if (md := self.media_duration) is not None:
+            self.sub_elem("itunes:duration", text=(int(md.total_seconds())))
 
         if self.uuid is None:
             self.uuid = self.media_url
         self.sub_elem("guid", {'isPermaLink': "false"}, text=str(self.uuid))
 
         if (pd := self.pub_date) is not None:
-            if pd.tzinfo is None or pd.tzinfo.utcoffset(pd) is None:
-                pd = pd.replace(tzinfo=timezone.utc)
-            self.sub_elem("pubDate", text=pd.strftime(self.dt_fmt))
+            pd = pd.replace(tzinfo=timezone.utc).strftime(self.dt_fmt)
+            self.sub_elem("pubDate", text=pd)
 
         return self
 
@@ -244,12 +241,6 @@ class PodcastFeed(JXElement):
             if getattr(self, name) is None:
                 raise ValueError(f"{name} element is required.")
 
-        # Validate link types
-        for name in ['image', 'link', 'feed_url']:
-            value = getattr(self, name, None)
-            if value is not None and not value.startswith('http'):
-                raise ValueError("Links should start with http:// or https://")
-
         self.sub_elem("title", text=self.title)
         # Maybe this could stand to be duplicated to itunes:summary?
         self.sub_elem("description", text=self.description)
@@ -281,13 +272,9 @@ class PodcastFeed(JXElement):
         # Now relevant RSS elements brought forward:
         if (lbd := self.last_build_date) is None:
             lbd = datetime.now(timezone.utc)
-
-        if (lbd.tzinfo is None or
-                lbd.tzinfo.utcoffset(lbd) is None):
-            lbd = lbd.replace(tzinfo=timezone.utc)
-        self.last_build_date = lbd
-
-        self.sub_elem("lastBuildDate", text=self.last_build_date.strftime(self.dt_fmt))
+        else:
+            lbd = lbd.replace(tzinfo=timezone.utc).strftime(self.dt_fmt)
+        self.sub_elem("lastBuildDate", text=lbd)
         self.sub_elem("generator", text=self.generator)
 
         # Atom self-link
@@ -295,7 +282,7 @@ class PodcastFeed(JXElement):
             self.sub_elem("atom:link", {
                 'href': self.feed_url,
                 'rel': 'self',
-                'type': 'application/rss+xml',
+                'type': 'text/xml',
             })
 
         # Episode time!

@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from typing import List, Literal, Optional
-from uuid import UUID
+from uuid import UUID, uuid4
 
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -41,7 +41,7 @@ class Podcast(DatetimeFormattingModel, db.Model, PodcastFeed):
     __tablename__ = 'podcast'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    uuid: Mapped[UUID]
+    uuid: Mapped[UUID] = mapped_column(default=uuid4)
     title: Mapped[str]
     link: Mapped[str]
     description: Mapped[str]
@@ -55,7 +55,7 @@ class Podcast(DatetimeFormattingModel, db.Model, PodcastFeed):
     itunes_block: Mapped[bool] = mapped_column(default=False)
     new_feed_url: Mapped[Optional[str]]
     complete: Mapped[bool] = mapped_column(default=False)
-    auth_token: Mapped[UUID]
+    auth_token: Mapped[UUID] = mapped_column(default=uuid4)
     last_build_date: Mapped[Optional[datetime]]
     is_serial: Mapped[bool] = mapped_column(default=False)
     episodes: Mapped[List["Episode"]] = relationship(
@@ -68,7 +68,7 @@ class Episode(FeedItem, DatetimeFormattingModel, db.Model):
     __tablename__ = 'episode'
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    uuid: Mapped[UUID]
+    uuid: Mapped[UUID] = mapped_column(default=uuid4)
     podcast_uuid = mapped_column(ForeignKey(Podcast.uuid))
     podcast: Mapped["Podcast"] = relationship(back_populates="episodes")
     title: Mapped[str]

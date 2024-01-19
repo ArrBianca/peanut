@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from functools import partial
 from typing import List, Literal, Optional
 from uuid import UUID, uuid4
 
@@ -35,7 +36,7 @@ class DatetimeFormattingModel:
         return d
 
 
-class Podcast(DatetimeFormattingModel, db.Model, PodcastFeed):
+class Podcast(PodcastFeed, db.Model, DatetimeFormattingModel):
     """ORM Mapping for the database's `podcast` table."""
 
     __tablename__ = 'podcast'
@@ -45,24 +46,25 @@ class Podcast(DatetimeFormattingModel, db.Model, PodcastFeed):
     title: Mapped[str]
     link: Mapped[str]
     description: Mapped[str]
-    explicit: Mapped[bool]
-    image: Mapped[str]
-    author: Mapped[str]
+    explicit: Mapped[bool] = mapped_column(default=False)
+    image: Mapped[Optional[str]]
+    author: Mapped[Optional[str]]
     copyright: Mapped[Optional[str]]
-    language: Mapped[str] = mapped_column(default="en-US")
+    language: Mapped[Optional[str]] = mapped_column(default="en-US")
     feed_url: Mapped[Optional[str]]
     categories: Mapped[List["Category"]] = relationship()
     itunes_block: Mapped[bool] = mapped_column(default=False)
     new_feed_url: Mapped[Optional[str]]
     complete: Mapped[bool] = mapped_column(default=False)
-    auth_token: Mapped[UUID] = mapped_column(default=uuid4)
-    last_build_date: Mapped[Optional[datetime]]
+    auth_token: Mapped[Optional[UUID]] = mapped_column(default=uuid4)
+    last_build_date: Mapped[datetime] = mapped_column(
+        default=partial(datetime.now, timezone.utc))
     is_serial: Mapped[bool] = mapped_column(default=False)
     episodes: Mapped[List["Episode"]] = relationship(
         back_populates="podcast", order_by="Episode.pub_date")
 
 
-class Episode(FeedItem, DatetimeFormattingModel, db.Model):
+class Episode(FeedItem, db.Model, DatetimeFormattingModel):
     """ORM Mapping for the database's `episode` table."""
 
     __tablename__ = 'episode'
@@ -81,14 +83,10 @@ class Episode(FeedItem, DatetimeFormattingModel, db.Model):
     pub_date: Mapped[datetime]
     link: Mapped[Optional[str]]
     image: Mapped[Optional[str]]
-    episode_type: Mapped[Literal["full", "trailer", "bonus"]] = mapped_column(default=None)
+    episode_type: Mapped[Optional[Literal["full", "trailer", "bonus"]]] =\
+        mapped_column(default=None)
     season: Mapped[Optional[int]]
     episode: Mapped[Optional[int]]
-
-    def __init__(self, **kwargs):
-        for attr, value in kwargs.items():
-            setattr(self, attr, value)
-        # super().__init__()
 
 
 class Category(DatetimeFormattingModel, db.Model):

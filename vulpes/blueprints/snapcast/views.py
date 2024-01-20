@@ -22,12 +22,8 @@ def generate_feed(podcast_uuid: UUID):
         .options(joinedload('*')),
     )
 
-    # The caveat to sqlite: It stores datetimes as naive.
-    cast.last_build_date = cast.last_build_date.replace(tzinfo=timezone.utc)
-    # The database column also stores microseconds which aren't included in
-    # the request. If they're just about equal we don't update anything.
     if ((request.if_modified_since is not None) and
-       (cast.last_build_date - request.if_modified_since).total_seconds() < 1):
+       (cast.last_build_date <= request.if_modified_since)):
         return Response(status=304)
 
     response = Response(cast.build(pretty=True), mimetype='text/xml')
@@ -46,7 +42,7 @@ def feed_head(podcast_uuid: UUID):
         .where(Podcast.uuid == podcast_uuid),
     )
     response = Response()
-    response.last_modified = last_modified.replace(tzinfo=timezone.utc)
+    response.last_modified = last_modified
     return response
 
 

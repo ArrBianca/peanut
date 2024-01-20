@@ -8,7 +8,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from vulpes.blueprints.snapcast.jxml import FeedItem, PodcastFeed
 
-from ... import db
+from ...nitre import TZDateTime, db
 
 
 class DatetimeFormattingModel:
@@ -57,8 +57,8 @@ class Podcast(PodcastFeed, db.Model, DatetimeFormattingModel):
     new_feed_url: Mapped[Optional[str]]
     complete: Mapped[bool] = mapped_column(default=False)
     auth_token: Mapped[Optional[UUID]] = mapped_column(default=uuid4)
-    last_build_date: Mapped[datetime] = mapped_column(
-        default=partial(datetime.now, timezone.utc))
+    last_build_date: Mapped[datetime] = (
+        mapped_column(TZDateTime, default=partial(datetime.now, timezone.utc)))
     is_serial: Mapped[bool] = mapped_column(default=False)
     episodes: Mapped[List["Episode"]] = relationship(
         back_populates="podcast", order_by="Episode.pub_date")
@@ -80,7 +80,7 @@ class Episode(FeedItem, db.Model, DatetimeFormattingModel):
     media_size: Mapped[int]
     media_type: Mapped[str]
     media_duration: Mapped[Optional[timedelta]]
-    pub_date: Mapped[datetime]
+    pub_date: Mapped[datetime] = mapped_column(TZDateTime)
     link: Mapped[Optional[str]]
     image: Mapped[Optional[str]]
     episode_type: Mapped[Optional[Literal["full", "trailer", "bonus"]]] =\

@@ -3,18 +3,9 @@ import os
 
 import tomli
 from flask import Flask, render_template
-from flask_sqlalchemy import SQLAlchemy
-from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-
-class Base(DeclarativeBase):
-    """The DeclarativeBase you have to use in sqlalchemy."""
-
-    pass
-
-
-db = SQLAlchemy(model_class=Base)
+from nitre import db
 
 
 def create_app(test_config=None):

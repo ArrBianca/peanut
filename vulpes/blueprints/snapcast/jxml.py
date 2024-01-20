@@ -83,13 +83,7 @@ class FeedItem(JXElement):
         extension.
         """
         self.pub_date: datetime = pub_date
-        """Publication date of the episode.
-
-        By default, the generator disregards the tzinfo from this value and
-        assumes it's UTC, by clobbering its tz property. Only pass in Aware,
-        UTC datetimes. This is obviously unideal and something to consider
-        fixing.
-        """
+        """Publication date of the episode."""
         self.uuid: UUID = uuid
         """The episode's UUID.
 
@@ -170,8 +164,7 @@ class FeedItem(JXElement):
             'length': str(self.media_size),
             'type': self.media_type,
         })
-        pd = self.pub_date.replace(tzinfo=timezone.utc).strftime(self.dt_fmt)
-        self.sub_elem("pubDate", text=pd)
+        self.sub_elem("pubDate", text=self.pub_date.strftime(self.dt_fmt))
 
         if self.uuid is None:
             self.uuid = self.media_url
@@ -293,11 +286,6 @@ class PodcastFeed(JXElement):
 
         Set this value to current when adding or updating an item or any field
         of the podcast.
-
-        By default, the generator disregards the tzinfo from this value and
-        assumes it's UTC, by clobbering its tz property. Only pass in Aware,
-        UTC datetimes. This is obviously unideal and something to consider
-        fixing.
         """
 
         self.feed_url: Optional[str] = None
@@ -368,9 +356,7 @@ class PodcastFeed(JXElement):
         # Now relevant RSS elements brought forward:
         if (lbd := self.last_build_date) is None:
             lbd = datetime.now(timezone.utc)
-        else:
-            lbd = lbd.replace(tzinfo=timezone.utc).strftime(self.dt_fmt)
-        self.sub_elem("lastBuildDate", text=lbd)
+        self.sub_elem("lastBuildDate", text=lbd.strftime(self.dt_fmt))
         self.sub_elem("generator", text=self.generator)
 
         # Atom self-link

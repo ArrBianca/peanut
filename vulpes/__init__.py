@@ -5,7 +5,7 @@ import tomli
 from flask import Flask, render_template
 from werkzeug.middleware.proxy_fix import ProxyFix
 
-from nitre import db
+from .nitre import db
 
 
 def create_app(test_config=None):

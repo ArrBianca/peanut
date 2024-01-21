@@ -38,7 +38,9 @@ class JMAPClient:
         if self._account_id:
             return self._account_id
 
-        account_id = self.session["primaryAccounts"]["urn:ietf:params:jmap:mail"]
+        accounts = self.session["primaryAccounts"]
+        account_id = accounts["urn:ietf:params:jmap:mail"]
+
         self._account_id = account_id
         return self._account_id
 
@@ -53,8 +55,8 @@ class JMAPClient:
         if self._upload_url:
             return self._upload_url
 
-        upload_url = self.session["uploadUrl"].replace("{accountId}", self.account_id)
-        self._upload_url = upload_url
+        upload_templ = self.session["uploadUrl"]
+        self._upload_url = upload_templ.replace("{accountId}", self.account_id)
         return self._upload_url
 
     @property
@@ -97,8 +99,11 @@ class JMAPClient:
         #   list of matching ids -> First one
         return response["methodResponses"][0][1]["ids"][0]
 
-    def prepare_plaintext_email(self, to_addr: str, subject: str, body: str) -> dict:
-        """Prepare a dictionary containing the required fields to send a plaintext email message."""
+    def prepare_plaintext_email(self,
+                                to_addr: str,
+                                subject: str,
+                                body: str) -> dict:
+        """Ready a basic email template as a dict."""
         return {
             "from": [{"email": self.username}],
             "to": [{"email": to_addr}],
@@ -111,7 +116,10 @@ class JMAPClient:
             "textBody": [{"partId": "body", "type": "text/plain"}],
         }
 
-    def attach_file_to_message(self, draft: dict, file_data: bytes, filename: str) -> None:
+    def attach_file_to_message(self,
+                               draft: dict,
+                               file_data: bytes,
+                               filename: str) -> None:
         """Upload an attachment and append its date to the message draft."""
         uploaded = self.file_upload(file_data)
         if "attachments" not in draft:
@@ -149,7 +157,7 @@ class JMAPClient:
         })
 
     def jmap_call(self, call: dict) -> dict:
-        """Make a JMAP POST request to the API, return the response as a Python data structure."""
+        """Make a JMAP POST request to the API."""
         return self._api_call(self.api_url, dumps(call))
 
     def file_upload(self, file_data: bytes) -> dict:

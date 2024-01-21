@@ -10,7 +10,7 @@ class JXElement(ETree.Element):
 
     dt_fmt = "%a, %d %b %Y %H:%M:%S %z"
 
-    def sub_elem(self, name, attrib=None, text=None):
+    def sub_elem(self, name, text: str = None, attrib: dict = None):
         """Add a sub-element to the current element and return it.
 
         :param name: The tag name of the child.
@@ -33,10 +33,10 @@ class FeedItem(JXElement):
     There are many available options, but some are more important than others.
     In approximate order of importance:
 
-    * ``title``, ``uuid``, ``pub_date``, and all three enclosure values are the
-      absolute bare minimum, and are thus required in the constructor.
-    * Following those, ``media_duration`` should be populated with the length in
-      seconds of the item's media.
+    * ``title``, ``uuid``, ``pub_date``, and all three enclosure values are
+      the absolute bare minimum, and are thus required in the constructor.
+    * Following those, ``media_duration`` should be populated with the
+      length in seconds of the item's media.
     * If the podcast is a Serial type, ``episode_type`` and ``episode`` should
       be set for all items. If the serial is a single season, the ``season``
       element MAY be omitted. Clients often hide the season selector if this is
@@ -49,12 +49,12 @@ class FeedItem(JXElement):
       a subtitle is not provided but a description is, it is used to fill the
       space.
     * In some but not all clients, ``link`` is shown on the episode detail page
-      as a tappable button to a single URL of your choice. Intended for the blog
-      page associated with a podcast episode; you can use it for whatever.
+      as a tappable button to a single URL of your choice. Intended for the
+      blog page associated with a podcast episode; you can use it for whatever.
     * ``image`` points to a cover art file for the episode. Support for this
-      varies **wildly** between clients. For best results, if you have episode art,
-      you should both set this and embed the image in the audio file. Even then,
-      it's not guaranteed that it will be shown. It sucks.
+      varies **wildly** between clients. For best results, if you have episode
+      art, you should both set this and embed the image in the audio file. Even
+      then, it's not guaranteed that it will be shown. It sucks.
     * And finally ``itunes_block`` specifies that this episode should not be
       displayed in Apple Podcasts. They say it's for episodes against their
       guidelines, to prevent the whole feed from being removed.
@@ -158,55 +158,56 @@ class FeedItem(JXElement):
                 raise ValueError(f"{name} element is required.")
 
         # Required elements
-        self.sub_elem("title", text=self.title)
+        self.sub_elem("title", self.title)
         self.sub_elem("enclosure", attrib={
             "url": self.media_url,
             "length": str(self.media_size),
             "type": self.media_type,
         })
-        self.sub_elem("pubDate", text=self.pub_date.strftime(self.dt_fmt))
+        self.sub_elem("pubDate", self.pub_date.strftime(self.dt_fmt))
 
         if self.uuid is None:
             self.uuid = self.media_url
-        self.sub_elem("guid", {"isPermaLink": "false"}, text=str(self.uuid))
+        self.sub_elem("guid", str(self.uuid), {"isPermaLink": "false"})
 
         # Simple text fields
-        self.sub_elem("itunes:episodeType", text=self.episode_type)
-        self.sub_elem("itunes:season", text=self.season)
-        self.sub_elem("itunes:episode", text=self.episode)
-        self.sub_elem("itunes:subtitle", text=self.subtitle)
-        self.sub_elem("description", text=self.description)
-        self.sub_elem("link", text=self.link)
+        self.sub_elem("itunes:episodeType", self.episode_type)
+        self.sub_elem("itunes:season", self.season)
+        self.sub_elem("itunes:episode", self.episode)
+        self.sub_elem("itunes:subtitle", self.subtitle)
+        self.sub_elem("description", self.description)
+        self.sub_elem("link", self.link)
 
         if self.image is not None:
-            self.sub_elem("itunes:image", {"href": self.image})
+            self.sub_elem("itunes:image", attrib={"href": self.image})
 
         # IME, apple podcats does not respect this tag at an episode level.
-        # self.sub_element("itunes:explicit", text="yes" if self.explicit else "no")
+        # self.sub_element("itunes:explicit",
+        #                  text="yes" if self.explicit else "no")
 
         if (md := self.media_duration) is not None:
-            self.sub_elem("itunes:duration", text=(int(md.total_seconds())))
+            self.sub_elem("itunes:duration", str(int(md.total_seconds())))
 
         return self
 
 
 class PodcastFeed(JXElement):
-    """An ETree Element that represents the `channel` tag in a podcast feed.
+    """An ETree Element that represents the `channel` tag in a podcast.
 
-    There are many available options, but some are more important than others.
-    In approximate order of importance:
+    There are many available options, but some are more important than
+    others. In approximate order of importance:
 
     * ``title``, ``description``, and ``link`` are vital. ``link`` is a URL to
       the website hosting the podcast or the feed's homepage.
     * ``image`` is the URL to the podcasts's cover art. Apple Podcasts says it
       should be a png or jpg between 1400 and 3000 px square. Transparency is
       very likely not handled well or at all. Probably keep it smaller for
-      convenience. The feed validators always yell at me for my 2MB cover image.
+      convenience. The feed validators always yell at me for my 2MB cover art.
     * If applicable, ``is_serial`` should be set. Clients change episode
-      handling behavior, generally splitting shows into seasons (based on fields
-      set at the episode level) and defaulting to presenting the episodes in an
-      oldest-to-newest ordering. If ``is_serial`` is set to True, all episodes
-      must be numbered.
+      handling behavior, generally splitting shows into seasons (based on
+      fields set at the episode level) and defaulting to presenting the
+      episodes in an oldest-to-newest ordering. If ``is_serial`` is set to
+      True, all episodes must be numbered.
     * ``author`` is the group or person responsible for creating the show. In
       podcast clients, this is shown near the title and can name a person or
       group or company etc.
@@ -220,7 +221,7 @@ class PodcastFeed(JXElement):
       <https://podcasters.apple.com/support/1691-apple-podcasts-categories>`_
       Check the code below for how to pass these values into the generator.
     * ``last_build_date`` represents the last time that feed content changed.
-      Set this value to the current time in your database when adding or
+      Set this value in your database to the current time when adding or
       updating an item or any field of the podcast.
     * To allegedly improve caching, ``feed_url`` should be set to the same URL
       the feed is being accessed at.
@@ -232,15 +233,15 @@ class PodcastFeed(JXElement):
       the primary spoken language used in the podcast.
     * ``itunes_block`` prevents toe feed from being added to the Apple Podcasts
       directory.
-    * If you're moving your feed to a new location, set ``new_feed_url`` on your
-      previous location, and leave it up for some time. Apple podcasts will
-      migrate subscribers automatically. Unknown if any other clients honor this
-      option, or if it still functions for podcasts that are withheld from the
-      directory.
-    * And finally, if you're `absolutely` certain that the feed will never again
-      be updated, set ``complete`` to True. Specifying this indicates, at least
-      to Apple Podcasts (maybe others. unknown.) that they should stop checking
-      the feed for updates. Setting this is PROBABLY NOT WORTH IT.
+    * If you're moving your feed to a new location, set ``new_feed_url`` on
+      your previous location, and leave it up for some time. Apple Podcasts
+      will migrate subscribers automatically. Unknown if any other clients
+      honor this option, or if it still functions for podcasts that are
+      withheld from the directory.
+    * And finally, if you're `absolutely` certain that the feed will never
+      again be updated, set ``complete`` to True. Specifying this indicates,
+      at least to Apple Podcasts (maybe others. unknown.) that they should stop
+      checking the feed for updates. Setting this is PROBABLY NOT WORTH IT.
     """
 
     tag = "channel"
@@ -249,7 +250,11 @@ class PodcastFeed(JXElement):
     generator: str = "JXML - The J stands for June!"
     """Indentifier for the feed-generating library."""
 
-    def __init__(self, title: str, description: str, link: str, **kwargs) -> None:
+    def __init__(self,
+                 title: str,
+                 description: str,
+                 link: str,
+                 **kwargs) -> None:
         self.episodes: list[FeedItem] = []
 
         # "Required" elements
@@ -267,7 +272,7 @@ class PodcastFeed(JXElement):
         self.explicit: Optional[bool] = None
         """Whether the podcast contains adult content."""
 
-        self.categories = []
+        self.categories: list = []
         """Category list for the podcast.
 
         Should be of the form of either:
@@ -321,37 +326,39 @@ class PodcastFeed(JXElement):
             if getattr(self, name) is None:
                 raise ValueError(f"{name} element is required.")
 
-        self.sub_elem("title", text=self.title)
+        self.sub_elem("title", self.title)
         # Maybe this could stand to be duplicated to itunes:summary?
-        self.sub_elem("description", text=self.description)
+        self.sub_elem("description", self.description)
         if self.image:
-            self.sub_elem("itunes:image", {"href": self.image})
+            self.sub_elem("itunes:image", attrib={"href": self.image})
 
         # Then the simple text-only elems:
-        self.sub_elem("itunes:author", text=self.author)
-        self.sub_elem("copyright", text=self.copyright)
-        self.sub_elem("link", text=self.link)
-        self.sub_elem("language", text=self.language)
-        self.sub_elem("itunes:new-feed-url", text=self.new_feed_url)
-
-        # The text elements with specific flag values.
-        self.sub_elem("itunes:type", text="serial" if self.is_serial else "episodic")
-        self.sub_elem("itunes:block", text="yes" if self.itunes_block else None)
-        self.sub_elem("itunes:complete", text="Yes" if self.complete else None)
+        self.sub_elem("itunes:author", self.author)
+        self.sub_elem("copyright", self.copyright)
+        self.sub_elem("link", self.link)
+        self.sub_elem("language", self.language)
+        self.sub_elem("itunes:new-feed-url", self.new_feed_url)
+        self.sub_elem("itunes:type",
+                      "serial" if self.is_serial else "episodic")
+        self.sub_elem("itunes:block", "yes" if self.itunes_block else None)
+        self.sub_elem("itunes:complete", "Yes" if self.complete else None)
         # Okay so the itunes podcast docs straight up lie. It says explicit
         # should be true or false, but it only accepts yes and no. How dare.
-        self.sub_elem("itunes:explicit", text="yes" if self.explicit else "no")
+        self.sub_elem("itunes:explicit", "yes" if self.explicit else "no")
 
-        # Category processing.
+        # Category processing. Accept dicty object for convenience :)
         for category in self.categories:
-            try:
-                cat = self.sub_elem("itunes:category", {"text": category.cat})
-                if cat is not None and hasattr(category, "sub") and category.sub is not None:
-                    ETree.SubElement(cat, "itunes:category", {"text": category.sub})
-            except AttributeError:
-                cat = self.sub_elem("itunes:category", {"text": category["cat"]})
-                if cat is not None and "sub" in category and category["sub"] is not None:
-                    ETree.SubElement(cat, "itunes:category", {"text": category["sub"]})
+            cat = sub = None
+
+            if hasattr(category, "cat") and hasattr(category, "sub"):
+                cat = category.cat
+                sub = category.sub
+            elif "cat" in category and "sub" in category:
+                cat = category["cat"]
+                sub = category["sub"]
+
+            cat_tag = self.sub_elem("itunes:category", attrib={"text": cat})
+            ETree.SubElement(cat_tag, "itunes:category", {"text": sub})
 
         # Now relevant RSS elements brought forward:
         if (lbd := self.last_build_date) is None:
@@ -361,7 +368,7 @@ class PodcastFeed(JXElement):
 
         # Atom self-link
         if self.feed_url is not None:
-            self.sub_elem("atom:link", {
+            self.sub_elem("atom:link", attrib={
                 "href": self.feed_url,
                 "rel": "self",
                 "type": "application/rss+xml",
@@ -373,4 +380,4 @@ class PodcastFeed(JXElement):
 
         if pretty:
             ETree.indent(root)
-        return ETree.tostring(root, encoding="unicode", xml_declaration=True) + "\n"
+        return ETree.tostring(root, encoding="unicode", xml_declaration=True)

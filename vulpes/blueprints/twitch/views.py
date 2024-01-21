@@ -6,15 +6,20 @@ from .utils import multifind
 
 _prefix = "https://api.twitch.tv/helix"
 
-bp = Blueprint("twitch", __name__, url_prefix="/twitch", template_folder="templates")
+bp = Blueprint("twitch",
+               __name__,
+               url_prefix="/twitch",
+               template_folder="templates")
 
 
 @bp.before_app_request
 def a():
-    """Add the twitch authorization to all the requests made in the views below."""
-    app.config["_headers"] = {"Accept": "application/vnd.twitchtv.v5+json",
-                              "Client-ID": app.config["TWITCH"]["CLIENT_ID"],
-                              "Authorization": "Bearer {}".format(app.config["TWITCH"]["TOKEN"])}
+    """Add the twitch authorization to all the requests made in this bp."""
+    app.config["_headers"] = {
+        "Accept": "application/vnd.twitchtv.v5+json",
+        "Client-ID": app.config["TWITCH"]["CLIENT_ID"],
+        "Authorization": "Bearer {}".format(app.config["TWITCH"]["TOKEN"]),
+    }
 
 
 @bp.route("/game/<game>")
@@ -52,7 +57,7 @@ def following(username):
 
 @bp.route("/user/<username>/simple")
 def userbot(username):
-    """Return the same data as above, but as a JSON object for automated parsing."""
+    """Return the same data as above, but as a JSON object for automation."""
     res = followed_streams(username)
 
     streamers = multifind(res, "user_name")

@@ -15,5 +15,5 @@ def jsonfind(json, *args):
 
 
 def multifind(jsonlist, *args):
-    """Given a list of JSON objects, traverse each in an identical way and return results."""
+    """Given a list of JSON objects, traverse each in an identical way."""
     return [jsonfind(json, *args) for json in jsonlist]

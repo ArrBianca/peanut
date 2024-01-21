@@ -15,7 +15,9 @@ def create_app(test_config=None):
 
     app.config.from_mapping(
         SECRET_KEY="dev",
-        SQLALCHEMY_DATABASE_URI=os.path.join("sqlite:///" + app.instance_path, "nitre.sqlite"),
+        SQLALCHEMY_DATABASE_URI=os.path.join(
+            "sqlite:///" + app.instance_path, "nitre.sqlite",
+        ),
     )
 
     # load the basic config file

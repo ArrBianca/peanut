@@ -12,9 +12,10 @@ from ... import db
 bp = Blueprint("snapcast", __name__, url_prefix="/snapcast")
 
 
-@bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
+@bp.route("/<uuid:podcast_uuid>/feed.xml",
+          methods=["GET"])
 def generate_feed(podcast_uuid: UUID):
-    """Pull podcast and episode data from the db and generate a podcast xml file."""
+    """Pull podcast and episode data from the db and generate podcast xml."""
     # noinspection PyTypeChecker
     cast: Podcast = db.first_or_404(
         select(Podcast)
@@ -54,7 +55,8 @@ def generate_snapcast():
     return generate_feed(UUID("1787bd99-9d00-48c3-b763-5837f8652bd9"))
 
 
-@bp.route("/<uuid:podcast_uuid>/publish", methods=["POST"])
+@bp.route("/<uuid:podcast_uuid>/publish",
+          methods=["POST"])
 @authorization_required
 def publish_episode(podcast_uuid: UUID):
     """Add a new episode to a podcast.
@@ -98,7 +100,8 @@ def publish_episode(podcast_uuid: UUID):
     return jsonify(success=True)
 
 
-@bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])
+@bp.route("/<uuid:podcast_uuid>/episode/<episode_id>",
+          methods=["GET"])
 def get_episode(podcast_uuid: UUID, episode_id: str):
     """Fetch details of a specific episode.
 
@@ -128,7 +131,8 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
     return jsonify(result.as_dict())
 
 
-@bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["PATCH"])
+@bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>",
+          methods=["PATCH"])
 @authorization_required
 def patch_episode(podcast_uuid: UUID, episode_uuid: UUID):
     """Just give it a dict with key=rowname value=newvalue. let's get naïve."""
@@ -150,7 +154,8 @@ def patch_episode(podcast_uuid: UUID, episode_uuid: UUID):
     return jsonify(success=True, rows=result.rowcount)
 
 
-@bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>", methods=["DELETE"])
+@bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>",
+          methods=["DELETE"])
 @authorization_required
 def delete_episode(podcast_uuid: UUID, episode_uuid: UUID):
     """Delete an episode."""
@@ -168,7 +173,8 @@ def delete_episode(podcast_uuid: UUID, episode_uuid: UUID):
     return jsonify(success=True)
 
 
-@bp.route("/<uuid:podcast_uuid>/episodes", methods=["GET"])
+@bp.route("/<uuid:podcast_uuid>/episodes",
+          methods=["GET"])
 @authorization_required
 def get_all_episodes(podcast_uuid: UUID):
     """Get all episodes for a podcast."""

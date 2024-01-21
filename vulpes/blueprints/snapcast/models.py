@@ -22,7 +22,8 @@ class DatetimeFormattingModel:
     def as_dict(self):
         """Create a `dict` representation off the model.
 
-        Replaces `datetime` and `timedelta` types with string representations, safe to send.
+        Replaces `datetime` and `timedelta` types with string
+        representations, safe to send.
         """
         d = {}
         for col in self.__table__.columns:

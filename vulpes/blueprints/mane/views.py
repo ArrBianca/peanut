@@ -49,7 +49,7 @@ def upload():
 
 @bp.route("/uploadbot", methods=["POST"])
 def uploadbot():
-    """Handle file upload and return a simpler response for automated access."""
+    """Handle file upload and return a simpler response for bots."""
     f = request.files["file"]
     filename = performupload(f)
     if filename is not None:
@@ -94,29 +94,3 @@ def performupload(f: FileStorage, customname: str = None):
 
     # deletewithinquota(c)
     return newname
-
-
-# # @uses_db
-# def deletewithinquota(c):
-#     maxarchive = 1024 * 1024 * 100
-#
-#     c.execute("SELECT * from peanut_files ORDER BY tstamp")
-#     results = c.fetchall()
-#     takensize = sum(row[1] for row in results)
-#
-#     if takensize > maxarchive:
-#         difference = takensize - maxarchive
-#         deleted = 0
-#         unlucky = []
-#
-#         for row in results:
-#             if difference > deleted:
-#                 unlucky.append(row[0])
-#                 deleted += row[1]
-#
-#         for filename in unlucky:
-#             amazon.delete(filename)
-#             c.execute("DELETE FROM peanut_files WHERE filename=?", (filename,))
-#
-#         # c.executemany("DELETE FROM peanut_files WHERE filename=%s",
-#         #               [(x,) for x in unlucky])

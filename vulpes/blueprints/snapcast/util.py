@@ -9,7 +9,7 @@ from ... import db
 
 
 def authorization_required(func):
-    """Check Bearer token of incoming requests, based on the podcast being accessed."""
+    """Check Bearer token of incoming requests, based on the podcast."""
     @wraps(func)
     def inner(*args, **kwargs):
         if not request.authorization:
@@ -28,7 +28,10 @@ def authorization_required(func):
 
 
 def touch_podcast(podcast_uuid):
-    """Update the last_modified field for a podcast. Called on cache-invalidating requests."""
+    """Update the last_modified field for a podcast.
+
+    Called on cache-invalidating requests.
+    """
     db.session.execute(
         update(Podcast)
         .where(Podcast.uuid == podcast_uuid)

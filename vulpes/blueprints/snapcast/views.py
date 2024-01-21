@@ -9,7 +9,7 @@ from .models import Episode, Podcast
 from .util import authorization_required, touch_podcast
 from ... import db
 
-bp = Blueprint('snapcast', __name__, url_prefix='/snapcast')
+bp = Blueprint("snapcast", __name__, url_prefix="/snapcast")
 
 
 @bp.route("/<uuid:podcast_uuid>/feed.xml", methods=["GET"])
@@ -19,14 +19,14 @@ def generate_feed(podcast_uuid: UUID):
     cast: Podcast = db.first_or_404(
         select(Podcast)
         .where(Podcast.uuid == podcast_uuid)
-        .options(joinedload('*')),
+        .options(joinedload("*")),
     )
 
     if ((request.if_modified_since is not None) and
        (cast.last_build_date <= request.if_modified_since)):
         return Response(status=304)
 
-    response = Response(cast.build(pretty=True), mimetype='text/xml')
+    response = Response(cast.build(pretty=True), mimetype="text/xml")
     response.last_modified = cast.last_build_date
     return response
 
@@ -72,23 +72,23 @@ def publish_episode(podcast_uuid: UUID):
     """
     json = request.json
 
-    if timestamp := json.get('timestamp'):
+    if timestamp := json.get("timestamp"):
         pub_date = datetime.fromtimestamp(timestamp, timezone.utc)
     else:
         pub_date = datetime.now(timezone.utc)
 
     data = {
         "podcast_uuid":     podcast_uuid,
-        "title":            json.get('title', "Untitled Episode"),
-        "subtitle":         json.get('subtitle'),
+        "title":            json.get("title", "Untitled Episode"),
+        "subtitle":         json.get("subtitle"),
 
         "uuid":             uuid4(),
-        "media_url":        json['url'],
-        "media_size":       json['size'],
-        "media_type":       json['ftype'],
-        "media_duration":   timedelta(seconds=json.get('duration')),
+        "media_url":        json["url"],
+        "media_size":       json["size"],
+        "media_type":       json["ftype"],
+        "media_duration":   timedelta(seconds=json.get("duration")),
 
-        "link":             json.get('link'),
+        "link":             json.get("link"),
         "pub_date":         pub_date,
     }
 
@@ -134,10 +134,10 @@ def patch_episode(podcast_uuid: UUID, episode_uuid: UUID):
     """Just give it a dict with key=rowname value=newvalue. let's get naïve."""
     json = request.json
 
-    if 'media_duration' in json:
-        json['media_duration'] = timedelta(seconds=json['media_duration'])
-    if 'pub_date' in json:
-        json['pub_date'] = datetime.fromisoformat(json['pub_date'])
+    if "media_duration" in json:
+        json["media_duration"] = timedelta(seconds=json["media_duration"])
+    if "pub_date" in json:
+        json["pub_date"] = datetime.fromisoformat(json["pub_date"])
 
     result = db.session.execute(
         update(Episode)

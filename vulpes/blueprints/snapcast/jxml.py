@@ -160,15 +160,15 @@ class FeedItem(JXElement):
         # Required elements
         self.sub_elem("title", text=self.title)
         self.sub_elem("enclosure", attrib={
-            'url': self.media_url,
-            'length': str(self.media_size),
-            'type': self.media_type,
+            "url": self.media_url,
+            "length": str(self.media_size),
+            "type": self.media_type,
         })
         self.sub_elem("pubDate", text=self.pub_date.strftime(self.dt_fmt))
 
         if self.uuid is None:
             self.uuid = self.media_url
-        self.sub_elem("guid", {'isPermaLink': "false"}, text=str(self.uuid))
+        self.sub_elem("guid", {"isPermaLink": "false"}, text=str(self.uuid))
 
         # Simple text fields
         self.sub_elem("itunes:episodeType", text=self.episode_type)
@@ -179,10 +179,10 @@ class FeedItem(JXElement):
         self.sub_elem("link", text=self.link)
 
         if self.image is not None:
-            self.sub_elem("itunes:image", {'href': self.image})
+            self.sub_elem("itunes:image", {"href": self.image})
 
         # IME, apple podcats does not respect this tag at an episode level.
-        # self.sub_element("itunes:explicit", text='yes' if self.explicit else 'no')
+        # self.sub_element("itunes:explicit", text="yes" if self.explicit else "no")
 
         if (md := self.media_duration) is not None:
             self.sub_elem("itunes:duration", text=(int(md.total_seconds())))
@@ -310,9 +310,9 @@ class PodcastFeed(JXElement):
     def build(self, pretty=False) -> str:
         """Construct a podcast RSS feed."""
         root = ETree.Element("rss", {
-            'version': "2.0",
-            'xmlns:itunes': "http://www.itunes.com/dtds/podcast-1.0.dtd",
-            'xmlns:atom': "http://www.w3.org/2005/Atom",
+            "version": "2.0",
+            "xmlns:itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd",
+            "xmlns:atom": "http://www.w3.org/2005/Atom",
         })
         root.append(self)
 
@@ -325,7 +325,7 @@ class PodcastFeed(JXElement):
         # Maybe this could stand to be duplicated to itunes:summary?
         self.sub_elem("description", text=self.description)
         if self.image:
-            self.sub_elem("itunes:image", {'href': self.image})
+            self.sub_elem("itunes:image", {"href": self.image})
 
         # Then the simple text-only elems:
         self.sub_elem("itunes:author", text=self.author)
@@ -340,18 +340,18 @@ class PodcastFeed(JXElement):
         self.sub_elem("itunes:complete", text="Yes" if self.complete else None)
         # Okay so the itunes podcast docs straight up lie. It says explicit
         # should be true or false, but it only accepts yes and no. How dare.
-        self.sub_elem("itunes:explicit", text='yes' if self.explicit else 'no')
+        self.sub_elem("itunes:explicit", text="yes" if self.explicit else "no")
 
         # Category processing.
         for category in self.categories:
             try:
-                cat = self.sub_elem("itunes:category", {'text': category.cat})
-                if cat is not None and hasattr(category, 'sub') and category.sub is not None:
-                    ETree.SubElement(cat, "itunes:category", {'text': category.sub})
+                cat = self.sub_elem("itunes:category", {"text": category.cat})
+                if cat is not None and hasattr(category, "sub") and category.sub is not None:
+                    ETree.SubElement(cat, "itunes:category", {"text": category.sub})
             except AttributeError:
-                cat = self.sub_elem("itunes:category", {'text': category['cat']})
-                if cat is not None and 'sub' in category and category['sub'] is not None:
-                    ETree.SubElement(cat, "itunes:category", {'text': category['sub']})
+                cat = self.sub_elem("itunes:category", {"text": category["cat"]})
+                if cat is not None and "sub" in category and category["sub"] is not None:
+                    ETree.SubElement(cat, "itunes:category", {"text": category["sub"]})
 
         # Now relevant RSS elements brought forward:
         if (lbd := self.last_build_date) is None:
@@ -362,9 +362,9 @@ class PodcastFeed(JXElement):
         # Atom self-link
         if self.feed_url is not None:
             self.sub_elem("atom:link", {
-                'href': self.feed_url,
-                'rel': 'self',
-                'type': 'application/rss+xml',
+                "href": self.feed_url,
+                "rel": "self",
+                "type": "application/rss+xml",
             })
 
         # Episode time!
@@ -373,4 +373,4 @@ class PodcastFeed(JXElement):
 
         if pretty:
             ETree.indent(root)
-        return ETree.tostring(root, encoding='unicode', xml_declaration=True) + '\n'
+        return ETree.tostring(root, encoding="unicode", xml_declaration=True) + "\n"

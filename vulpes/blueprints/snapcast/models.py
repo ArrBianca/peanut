@@ -39,7 +39,7 @@ class DatetimeFormattingModel:
 class Podcast(PodcastFeed, db.Model, DatetimeFormattingModel):
     """ORM Mapping for the database's `podcast` table."""
 
-    __tablename__ = 'podcast'
+    __tablename__ = "podcast"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[UUID] = mapped_column(default=uuid4)
@@ -67,7 +67,7 @@ class Podcast(PodcastFeed, db.Model, DatetimeFormattingModel):
 class Episode(FeedItem, db.Model, DatetimeFormattingModel):
     """ORM Mapping for the database's `episode` table."""
 
-    __tablename__ = 'episode'
+    __tablename__ = "episode"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     uuid: Mapped[UUID] = mapped_column(default=uuid4)
@@ -92,7 +92,7 @@ class Episode(FeedItem, db.Model, DatetimeFormattingModel):
 class Category(DatetimeFormattingModel, db.Model):
     """ORM Mapping for the database's `category` table."""
 
-    __tablename__ = 'category'
+    __tablename__ = "category"
 
     id: Mapped[int] = mapped_column(primary_key=True)
     podcast_id: Mapped[int] = mapped_column(ForeignKey("podcast.id"))
@@ -100,5 +100,5 @@ class Category(DatetimeFormattingModel, db.Model):
     sub: Mapped[Optional[str]]
 
     # def __init__(self):
-    #     self.__dict__['cat'] = self.cat
-    #     self.__dict__['sub'] = self.sub
+    #     self.__dict__["cat"] = self.cat
+    #     self.__dict__["sub"] = self.sub

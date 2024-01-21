@@ -11,22 +11,22 @@ from .models import PeanutFile
 from .util import get_amazon, randomname, send_file
 from ... import db
 
-bp = Blueprint('mane', __name__, template_folder='templates')
+bp = Blueprint("mane", __name__, template_folder="templates")
 
 
-@bp.route('/')
+@bp.route("/")
 def mainpage():
     """Get the site's homepage."""
-    return render_template('mainpage.html')
+    return render_template("mainpage.html")
 
 
-@bp.route('/dropbox')
+@bp.route("/dropbox")
 def dropbox():
     """Get the site's homepage, but with the "Dropbox" checkbox checked."""
-    return render_template('mainpage.html', dropbox="checked")
+    return render_template("mainpage.html", dropbox="checked")
 
 
-@bp.route('/upload', methods=["POST"])
+@bp.route("/upload", methods=["POST"])
 def upload():
     """Handle file upload."""
     f = request.files["file"]
@@ -39,7 +39,7 @@ def upload():
             args=(get_jmap(), f.filename, f.read()),
             daemon=True,
         ).start()
-        return redirect(url_for('mane.dropbox'))
+        return redirect(url_for("mane.dropbox"))
 
     filename = performupload(f)
     if filename is not None:
@@ -47,7 +47,7 @@ def upload():
     return "Error, probably an empty upload field"
 
 
-@bp.route('/uploadbot', methods=["POST"])
+@bp.route("/uploadbot", methods=["POST"])
 def uploadbot():
     """Handle file upload and return a simpler response for automated access."""
     f = request.files["file"]
@@ -63,7 +63,7 @@ def performupload(f: FileStorage, customname: str = None):
         return None
 
     filename = secure_filename(f.filename)
-    ext = [x[-1] if len(x) > 1 else None for x in [filename.split('.')]][0]
+    ext = [x[-1] if len(x) > 1 else None for x in [filename.split(".")]][0]
     if customname is not None:
         result = db.session.execute(
             select(PeanutFile)
@@ -89,8 +89,8 @@ def performupload(f: FileStorage, customname: str = None):
     db.session.commit()
     # amazon.upload(newname, f.stream)
     get_amazon().upload_fileobj(
-        f, 'f.peanut.one', newname,
-        ExtraArgs={'ACL': 'public-read', 'ContentType': f.mimetype})
+        f, "f.peanut.one", newname,
+        ExtraArgs={"ACL": "public-read", "ContentType": f.mimetype})
 
     # deletewithinquota(c)
     return newname

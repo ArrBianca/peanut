@@ -17,7 +17,7 @@ def authorization_required(func):
 
         result = db.first_or_404(  # Invalid podcast ID.
             select(Podcast.auth_token)
-            .where(Podcast.uuid == kwargs['podcast_uuid']),
+            .where(Podcast.uuid == kwargs["podcast_uuid"]),
         )
 
         if request.authorization.token == str(result):

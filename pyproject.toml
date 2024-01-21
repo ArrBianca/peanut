@@ -24,8 +24,8 @@ line-length = 100
 exclude = ["nitre/"]
 
 [tool.ruff.lint]
-select = [  # Brought over whole-cloth from another project of mine.
-    "E", "E501", "I", "D",
+select = [
+    "E", "E501", "I", "D", "Q",
     "N", "F", "UP", "TD", "W",
     "BLE", "B", "COM", "C4",
     "DTZ", "RET", "SLF", "SIM",

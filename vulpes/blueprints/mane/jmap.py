@@ -45,7 +45,7 @@ class JMAPClient:
     @property
     def api_url(self):
         """The root API URL for the server."""
-        return self.session['apiUrl']
+        return self.session["apiUrl"]
 
     @property
     def upload_url(self):
@@ -68,7 +68,7 @@ class JMAPClient:
             "methodCalls": [
                 ["Identity/get",
                     {"accountId": self.account_id},
-                 'i'],
+                 "i"],
             ],
         })
 
@@ -84,8 +84,8 @@ class JMAPClient:
     def mailbox_by_name(self, name: str) -> str:
         """Retrieve the ID of the first mailbox matching the given name."""
         response = self.jmap_call({
-            'using': ["urn:ietf:params:jmap:mail"],
-            'methodCalls': [
+            "using": ["urn:ietf:params:jmap:mail"],
+            "methodCalls": [
                 ["Mailbox/query",
                     {"accountId": self.account_id,
                         "filter": {"name": name},
@@ -95,7 +95,7 @@ class JMAPClient:
         })
         # Responses -> Response for Call #0 -> resp[1] is the result dict ->
         #   list of matching ids -> First one
-        return response['methodResponses'][0][1]['ids'][0]
+        return response["methodResponses"][0][1]["ids"][0]
 
     def prepare_plaintext_email(self, to_addr: str, subject: str, body: str) -> dict:
         """Prepare a dictionary containing the required fields to send a plaintext email message."""
@@ -114,8 +114,8 @@ class JMAPClient:
     def attach_file_to_message(self, draft: dict, file_data: bytes, filename: str) -> None:
         """Upload an attachment and append its date to the message draft."""
         uploaded = self.file_upload(file_data)
-        if 'attachments' not in draft:
-            draft['attachments'] = []
+        if "attachments" not in draft:
+            draft["attachments"] = []
         draft["attachments"].append({
             "blobId": uploaded["blobId"],
             "type": uploaded["type"],
@@ -157,11 +157,11 @@ class JMAPClient:
 
         Returns a response what looks like this:
 
-            {'accountId': str,
-        'blobId': str,
-        'expires': iso-date,
-        'size': int,
-        'type': str}
+            {"accountId": str,
+        "blobId": str,
+        "expires": iso-date,
+        "size": int,
+        "type": str}
         """
         return self._api_call(self.upload_url, file_data)
 
@@ -180,11 +180,11 @@ class JMAPClient:
 
 def get_jmap():
     """Create or return the configured JMAPClient."""
-    if 'jmap' not in g:
+    if "jmap" not in g:
         g.jmap = JMAPClient(
-            current_app.config['JMAP']['HOSTNAME'],
-            current_app.config['JMAP']['USERNAME'],
-            current_app.config['JMAP']['TOKEN'],
+            current_app.config["JMAP"]["HOSTNAME"],
+            current_app.config["JMAP"]["USERNAME"],
+            current_app.config["JMAP"]["TOKEN"],
         )
 
     return g.jmap

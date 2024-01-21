@@ -12,10 +12,10 @@ from ... import db
 
 def randomname(ext=None):
     """Generate a new unique random short name for a file."""
-    randname = ''.join([choice(string.ascii_lowercase)
-                       for _ in range(app.config['FOX']['FILE_NAME_LENGTH'])])
+    randname = "".join([choice(string.ascii_lowercase)
+                       for _ in range(app.config["FOX"]["FILE_NAME_LENGTH"])])
     if ext is not None:
-        randname = randname + '.' + ext
+        randname = randname + "." + ext
 
     result = db.session.execute(
         select(PeanutFile)
@@ -48,10 +48,10 @@ Filesize: {len(file_data) / 1024 / 1024:.2F}MB
 
 def get_amazon():
     """Get an s3 connection."""
-    if 's3' not in g:
+    if "s3" not in g:
         g.s3 = boto3.client(
-            's3',
-            aws_access_key_id=app.config['S3']['ACCESS_KEY'],
-            aws_secret_access_key=app.config['S3']['SECRET_KEY'],
+            "s3",
+            aws_access_key_id=app.config["S3"]["ACCESS_KEY"],
+            aws_secret_access_key=app.config["S3"]["SECRET_KEY"],
         )
     return g.s3

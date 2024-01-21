@@ -14,16 +14,16 @@ def create_app(test_config=None):
     app.wsgi_app = ProxyFix(app.wsgi_app)
 
     app.config.from_mapping(
-        SECRET_KEY='dev',
-        SQLALCHEMY_DATABASE_URI=os.path.join("sqlite:///" + app.instance_path, 'nitre.sqlite'),
+        SECRET_KEY="dev",
+        SQLALCHEMY_DATABASE_URI=os.path.join("sqlite:///" + app.instance_path, "nitre.sqlite"),
     )
 
     # load the basic config file
-    app.config.from_file('dev.config.toml', load=tomli.load, text=False)
+    app.config.from_file("dev.config.toml", load=tomli.load, text=False)
 
     if test_config is None:
         # load the instance config, if it exists, when not testing
-        app.config.from_file('config.toml', load=tomli.load, text=False)
+        app.config.from_file("config.toml", load=tomli.load, text=False)
         pass
     else:
         # load the test config if passed in
@@ -33,7 +33,7 @@ def create_app(test_config=None):
     with contextlib.suppress(OSError):
         os.makedirs(app.instance_path)
 
-    if app.config['SERVER_NAME'] == 'peanut.one':
+    if app.config["SERVER_NAME"] == "peanut.one":
         app.url_map.default_subdomain = "www"
 
     db.init_app(app)

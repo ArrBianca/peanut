@@ -1,7 +1,7 @@
 from datetime import datetime, timedelta, timezone
 from uuid import UUID, uuid4
 
-from flask import Blueprint, Response, abort, jsonify, request
+from flask import Blueprint, Response, abort, request
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import joinedload
 
@@ -37,7 +37,7 @@ def feed_head(podcast_uuid: UUID):
 
     Fill `Last-Modified` to save on data transfer.
     """
-    last_modified: Podcast = db.one_or_404(
+    last_modified: datetime = db.one_or_404(
         select(Podcast.last_build_date)
         .where(Podcast.uuid == podcast_uuid),
     )
@@ -71,6 +71,8 @@ def publish_episode(podcast_uuid: UUID):
         timestamp: int,
     """
     json = request.json
+    if json is None:
+        return {}
 
     if timestamp := json.get("timestamp"):
         pub_date = datetime.fromtimestamp(timestamp, timezone.utc)
@@ -95,7 +97,7 @@ def publish_episode(podcast_uuid: UUID):
     db.session.add(Episode(**data))
     touch_podcast(podcast_uuid)
     db.session.commit()
-    return jsonify(success=True)
+    return {}
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<episode_id>", methods=["GET"])
@@ -106,8 +108,8 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
     episode.
     """
     try:
-        episode_id = int(episode_id)
-        if episode_id == -1:  # Special case: get the latest episode
+        id_number = int(episode_id)
+        if id_number == -1:  # Special case: get the latest episode
             result: Episode = db.first_or_404(
                 select(Episode)
                 .order_by(Episode.pub_date.desc()),
@@ -125,7 +127,7 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
             .where(Episode.uuid == UUID(episode_id)),
         )
 
-    return jsonify(result.as_dict())
+    return result.as_dict()
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>",
@@ -134,6 +136,8 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
 def patch_episode(podcast_uuid: UUID, episode_uuid: UUID):
     """Just give it a dict with key=rowname value=newvalue. let's get naïve."""
     json = request.json
+    if json is None:
+        abort(400)
 
     if "media_duration" in json:
         json["media_duration"] = timedelta(seconds=json["media_duration"])
@@ -148,7 +152,7 @@ def patch_episode(podcast_uuid: UUID, episode_uuid: UUID):
     touch_podcast(podcast_uuid)
     db.session.commit()
 
-    return jsonify(success=True, rows=result.rowcount)
+    return {"rows": result.rowcount}
 
 
 @bp.route("/<uuid:podcast_uuid>/episode/<uuid:episode_uuid>",
@@ -167,7 +171,7 @@ def delete_episode(podcast_uuid: UUID, episode_uuid: UUID):
     touch_podcast(podcast_uuid)
     db.session.commit()
 
-    return jsonify(success=True)
+    return {}
 
 
 @bp.route("/<uuid:podcast_uuid>/episodes", methods=["GET"])
@@ -179,4 +183,4 @@ def get_all_episodes(podcast_uuid: UUID):
         .where(Episode.podcast_uuid == podcast_uuid),
     )
 
-    return jsonify([episode.as_dict() for episode in results])
+    return [episode.as_dict() for episode in results]

@@ -26,7 +26,7 @@ class DatetimeFormattingModel:
         representations, safe to send.
         """
         d = {}
-        for col in self.__table__.columns:
+        for col in self.__table__.columns: # type: ignore
             val = getattr(self, col.name)
             if isinstance(val, timedelta):
                 d[col.name] = int(val.total_seconds())

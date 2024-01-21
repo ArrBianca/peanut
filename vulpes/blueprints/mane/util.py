@@ -1,5 +1,6 @@
 import string
 from random import choice
+from typing import Optional
 
 import boto3
 from flask import current_app as app
@@ -10,7 +11,7 @@ from .models import PeanutFile
 from ... import db
 
 
-def randomname(ext=None):
+def randomname(ext: Optional[str] = None):
     """Generate a new unique random short name for a file."""
     randname = "".join([choice(string.ascii_lowercase)
                        for _ in range(app.config["FOX"]["FILE_NAME_LENGTH"])])

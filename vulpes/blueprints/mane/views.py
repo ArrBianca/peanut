@@ -1,5 +1,6 @@
 from datetime import datetime, timezone
 from threading import Thread
+from typing import Optional
 
 from flask import Blueprint, redirect, render_template, request, url_for
 from sqlalchemy import select
@@ -57,9 +58,9 @@ def uploadbot():
     return "Error, probably an empty upload field"
 
 
-def performupload(f: FileStorage, customname: str = None):
+def performupload(f: FileStorage, customname: Optional[str] = None):
     """Rename and upload file to Amazon S3, returning its new name."""
-    if not f:
+    if f is None or f.filename is None:
         return None
 
     filename = secure_filename(f.filename)
@@ -71,7 +72,9 @@ def performupload(f: FileStorage, customname: str = None):
         ).fetchone()
         if result is not None:
             return None
-        newname = customname + "." + ext
+        newname = customname
+        if ext:
+            newname += "." + ext
     else:
         newname = randomname(ext)
 

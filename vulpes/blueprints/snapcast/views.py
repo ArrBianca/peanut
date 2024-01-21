@@ -112,6 +112,7 @@ def get_episode(podcast_uuid: UUID, episode_id: str):
         if id_number == -1:  # Special case: get the latest episode
             result: Episode = db.first_or_404(
                 select(Episode)
+                .where(Episode.podcast_uuid == podcast_uuid)
                 .order_by(Episode.pub_date.desc()),
             )
         else:

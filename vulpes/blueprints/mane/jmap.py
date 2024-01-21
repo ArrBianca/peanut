@@ -99,10 +99,8 @@ class JMAPClient:
         #   list of matching ids -> First one
         return response["methodResponses"][0][1]["ids"][0]
 
-    def prepare_plaintext_email(self,
-                                to_addr: str,
-                                subject: str,
-                                body: str) -> dict:
+    def prepare_plaintext_email(
+            self, to_addr: str, subject: str, body: str) -> dict:
         """Ready a basic email template as a dict."""
         return {
             "from": [{"email": self.username}],
@@ -116,10 +114,8 @@ class JMAPClient:
             "textBody": [{"partId": "body", "type": "text/plain"}],
         }
 
-    def attach_file_to_message(self,
-                               draft: dict,
-                               file_data: bytes,
-                               filename: str) -> None:
+    def attach_file_to_message(
+            self, draft: dict, file_data: bytes, filename: str) -> None:
         """Upload an attachment and append its date to the message draft."""
         uploaded = self.file_upload(file_data)
         if "attachments" not in draft:

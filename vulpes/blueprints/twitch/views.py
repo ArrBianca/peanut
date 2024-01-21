@@ -6,10 +6,12 @@ from .utils import multifind
 
 _prefix = "https://api.twitch.tv/helix"
 
-bp = Blueprint("twitch",
-               __name__,
-               url_prefix="/twitch",
-               template_folder="templates")
+bp = Blueprint(
+    "twitch",
+    __name__,
+    url_prefix="/twitch",
+    template_folder="templates",
+)
 
 
 @bp.before_app_request

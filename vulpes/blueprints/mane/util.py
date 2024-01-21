@@ -42,10 +42,7 @@ Filesize: {len(file_data) / 1024 / 1024:.2F}MB
 
 """
     draft = jmap_client.prepare_plaintext_email(
-        "june@peanut.one",
-        "File for ya!",
-        body,
-    )
+        "june@peanut.one", "File for ya!", body)
     jmap_client.attach_file_to_message(draft, file_data, filename)
     jmap_client.send(draft)
 

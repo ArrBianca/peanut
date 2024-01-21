@@ -10,7 +10,11 @@ class JXElement(ETree.Element):
 
     dt_fmt = "%a, %d %b %Y %H:%M:%S %z"
 
-    def sub_elem(self, name, text: str = None, attrib: dict = None):
+    def sub_elem(self,
+                 name: str,
+                 text: Optional[str | int] = None,
+                 attrib: Optional[dict] = None,
+    ):
         """Add a sub-element to the current element and return it.
 
         :param name: The tag name of the child.
@@ -67,8 +71,10 @@ class FeedItem(JXElement):
                  media_url: str,
                  media_size: int,
                  media_type: str,
-                 pub_date: datetime | None,
-                 uuid: UUID | None, **kwargs) -> None:
+                 pub_date: datetime,
+                 uuid: UUID | str,
+                 **kwargs,
+    ) -> None:
         self.title: str = title
         """The episode's title"""
         self.media_url: str = media_url
@@ -84,7 +90,7 @@ class FeedItem(JXElement):
         """
         self.pub_date: datetime = pub_date
         """Publication date of the episode."""
-        self.uuid: UUID = uuid
+        self.uuid: UUID | str = uuid
         """The episode's UUID.
 
         This is used to identify the episode and should not change. it is
@@ -186,7 +192,7 @@ class FeedItem(JXElement):
         #                  text="yes" if self.explicit else "no")
 
         if (md := self.media_duration) is not None:
-            self.sub_elem("itunes:duration", str(int(md.total_seconds())))
+            self.sub_elem("itunes:duration", int(md.total_seconds()))
 
         return self
 
@@ -254,7 +260,8 @@ class PodcastFeed(JXElement):
                  title: str,
                  description: str,
                  link: str,
-                 **kwargs) -> None:
+                 **kwargs,
+    ) -> None:
         self.episodes: list[FeedItem] = []
 
         # "Required" elements
@@ -358,13 +365,14 @@ class PodcastFeed(JXElement):
                 sub = category["sub"]
 
             cat_tag = self.sub_elem("itunes:category", attrib={"text": cat})
-            ETree.SubElement(cat_tag, "itunes:category", {"text": sub})
+            if cat_tag is not None and sub is not None:
+                ETree.SubElement(cat_tag, "itunes:category", {"text": sub})
 
         # Now relevant RSS elements brought forward:
         if (lbd := self.last_build_date) is None:
             lbd = datetime.now(timezone.utc)
-        self.sub_elem("lastBuildDate", text=lbd.strftime(self.dt_fmt))
-        self.sub_elem("generator", text=self.generator)
+        self.sub_elem("lastBuildDate", lbd.strftime(self.dt_fmt))
+        self.sub_elem("generator", self.generator)
 
         # Atom self-link
         if self.feed_url is not None:

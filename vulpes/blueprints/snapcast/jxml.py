@@ -4,6 +4,15 @@ from typing import Optional
 from uuid import UUID
 from xml.etree import ElementTree as ETree
 
+mime_lookup = {
+    ".m4a": "audio/x-m4a",
+    ".mp3": "audio/mpeg",
+    ".mov": "video/quicktime",
+    ".mp4": "video/mp4",  # mp4 files should only be used for video.
+    ".m4v": "video/x-m4v",
+    ".pdf": "application/pdf",  # Why does itunes support pdf podcasts?
+}
+
 
 class JXElement(ETree.Element):
     """Base class for podcast types. Provides sub_element."""

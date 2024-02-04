@@ -5,6 +5,18 @@ from flask import Blueprint, Response, abort, request
 from sqlalchemy import delete, select, update
 from sqlalchemy.orm import joinedload
 
+from .jvalidate import (
+    Pull,
+    episode_type,
+    image,
+    media_type,
+    non_negative,
+    positive,
+    to_datetime,
+    to_timedelta,
+    url,
+)
+from .jxml import mime_lookup
 from .models import Episode, Podcast
 from .util import authorization_required, touch_podcast
 from ... import db
@@ -60,39 +72,65 @@ def publish_episode(podcast_uuid: UUID):
     """Add a new episode to a podcast.
 
     Required elements in JSON request body:
-        url:       str,
-        size:      int,
-        ftype:     str,
+        title:        str,
+        url:          str, media_url
+        size:         int, media_size
     Optional elements:
-        duration:  int,
-        title:     str,
-        subtitle:  str,
-        link:      str,
-        timestamp: int,
+        subtitle:     str,
+        description:  str,
+        duration:     int, media_duration
+        timestamp:    int, pub_date
+        link:         str,
+        image:        str,
+        episode_type: str,
+        season:       int,
+        episode:      int,
+
+    media_type is set automatically.
     """
     json = request.json
     if json is None:
         return {}
 
-    if timestamp := json.get("timestamp"):
-        pub_date = datetime.fromtimestamp(timestamp, timezone.utc)
-    else:
-        pub_date = datetime.now(timezone.utc)
+    # The structure of this should mimic that of the input dict.
+    extractors = (
+        Pull("title", required=True),
+        Pull("subtitle"),
+        Pull("description"),
+        Pull(
+            "timestamp",
+            to_datetime,
+            to="pub_date",
+            default=datetime.now(timezone.utc),
+        ),
 
-    data = {
-        "podcast_uuid":     podcast_uuid,
-        "title":            json.get("title", "Untitled Episode"),
-        "subtitle":         json.get("subtitle"),
+        Pull("url", url, media_type, to="media_url", required=True),
+        Pull("size", non_negative, to="media_size", required=True),
+        Pull("duration", non_negative, to_timedelta, to="media_duration"),
 
-        "uuid":             uuid4(),
-        "media_url":        json["url"],
-        "media_size":       json["size"],
-        "media_type":       json["ftype"],
-        "media_duration":   timedelta(seconds=json.get("duration")),
+        Pull("link", url),
+        Pull("image", url, image),
 
-        "link":             json.get("link"),
-        "pub_date":         pub_date,
-    }
+        Pull("episode_type", episode_type),
+        Pull("episode", positive),
+        Pull("season", positive),
+    )
+    data = {}
+    for extractor in extractors:
+        try:
+            # Typeerror if a filter fails.
+            # ValueError if it's required and missing.
+            data[extractor.to] = extractor.run(json)
+        except ValueError as e:
+            abort(400, description=e.__str__())
+        except TypeError as e:
+            abort(422, description=e.__str__())
+
+    # Right now data has the stuff from the JSON, now we add the extra
+    # data needed for the db.
+    data["uuid"] = uuid4()
+    data["podcast_uuid"] = podcast_uuid
+    data["media_type"] = mime_lookup[data["media_url"][-4:]]
 
     db.session.add(Episode(**data))
     touch_podcast(podcast_uuid)

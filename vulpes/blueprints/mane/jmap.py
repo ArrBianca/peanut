@@ -157,7 +157,7 @@ class JMAPClient:
         return self._api_call(self.api_url, dumps(call))
 
     def file_upload(self, file_data: bytes) -> dict:
-        """Upload file date to the out-of-band upload endpoint.
+        """Upload file data to the out-of-band upload endpoint.
 
         Returns a response what looks like this:
 

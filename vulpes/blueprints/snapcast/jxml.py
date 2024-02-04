@@ -4,6 +4,15 @@ from typing import Optional
 from uuid import UUID
 from xml.etree import ElementTree as ETree
 
+mime_lookup = {
+    ".m4a": "audio/x-m4a",
+    ".mp3": "audio/mpeg",
+    ".mov": "video/quicktime",
+    ".mp4": "video/mp4",  # mp4 files should only be used for video.
+    ".m4v": "video/x-m4v",
+    ".pdf": "application/pdf",  # Why does itunes support pdf podcasts?
+}
+
 
 class JXElement(ETree.Element):
     """Base class for podcast types. Provides sub_element."""
@@ -285,7 +294,7 @@ class PodcastFeed(JXElement):
         Should be of the form of either:
             - A list of objects with <cat> and [sub] attrs.
             - A list of dicts with <cat> and [sub] keys.
-        (`cat` is mandatory if given, `sub` is optional)
+        (`cat` is mandatory, `sub` may be None)
 
         The values of `cat` and `sub` should correspond to the categories and
         subcategories laid out in the Apple Podcasts documentation `Here
@@ -345,10 +354,10 @@ class PodcastFeed(JXElement):
         self.sub_elem("link", self.link)
         self.sub_elem("language", self.language)
         self.sub_elem("itunes:new-feed-url", self.new_feed_url)
-        self.sub_elem("itunes:type",
-                      "serial" if self.is_serial else "episodic")
         self.sub_elem("itunes:block", "yes" if self.itunes_block else None)
         self.sub_elem("itunes:complete", "Yes" if self.complete else None)
+        self.sub_elem("itunes:type",
+                      "serial" if self.is_serial else "episodic")
         # Okay so the itunes podcast docs straight up lie. It says explicit
         # should be true or false, but it only accepts yes and no. How dare.
         self.sub_elem("itunes:explicit", "yes" if self.explicit else "no")

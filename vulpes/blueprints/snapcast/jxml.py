@@ -354,7 +354,7 @@ class PodcastFeed(JXElement):
         self.sub_elem("link", self.link)
         self.sub_elem("language", self.language)
         self.sub_elem("itunes:new-feed-url", self.new_feed_url)
-        self.sub_elem("itunes:block", "yes" if self.itunes_block else None)
+        self.sub_elem("itunes:block", "Yes" if self.itunes_block else None)
         self.sub_elem("itunes:complete", "Yes" if self.complete else None)
         self.sub_elem("itunes:type",
                       "serial" if self.is_serial else "episodic")

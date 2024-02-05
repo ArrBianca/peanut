@@ -334,6 +334,7 @@ class PodcastFeed(JXElement):
             "version": "2.0",
             "xmlns:itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd",
             "xmlns:atom": "http://www.w3.org/2005/Atom",
+            "xmlns:podcast": "https://podcastindex.org/namespace/1.0",
         })
         root.append(self)
 

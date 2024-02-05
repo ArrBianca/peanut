@@ -189,9 +189,13 @@ class FeedItem(JXElement):
         self.sub_elem("itunes:episodeType", self.episode_type)
         self.sub_elem("itunes:season", self.season)
         self.sub_elem("itunes:episode", self.episode)
-        self.sub_elem("itunes:subtitle", self.subtitle)
-        self.sub_elem("description", self.description)
         self.sub_elem("link", self.link)
+
+        self.sub_elem("itunes:subtitle", self.subtitle)
+        if self.description is not None:
+            self.sub_elem("description", self.description)
+        else:
+            self.sub_elem("description", self.subtitle)
 
         if self.image is not None:
             self.sub_elem("itunes:image", attrib={"href": self.image})

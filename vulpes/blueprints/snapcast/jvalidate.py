@@ -11,7 +11,7 @@ class Pull:
     def __init__(
             self,
             from_,
-            *filters: Callable,
+            *rules: Callable,
             required: bool = False,
             to: str | None = None,
             default: Any | None = None,
@@ -19,8 +19,8 @@ class Pull:
         """Set up a value to be pulled from a dict and processed.
 
         :param from_: The dict field to take the value from.
-        :param filters: zero to several callables like the ones below
-            that take the value as well as its field name for error
+        :param rules: zero to several callables like the ones below
+            that take the value as well as its key name for error
             formatting, and transform or validate the value. Raise a
             TypeError if the value does not pass validation, return
             the value unaltered if no changes are made.
@@ -32,7 +32,7 @@ class Pull:
             in the source. Overrules `required` if set.
         """
         self.from_ = from_
-        self.filters = filters
+        self.rules = rules
         self.required = required
         self.to = to or from_
         self.default = default
@@ -50,8 +50,8 @@ class Pull:
             if self.required:
                 raise ValueError(f"{self.from_} missing.")
             return None
-        for f in self.filters:
-            value = f(value, field=self.from_)
+        for rule in self.rules:
+            value = rule(value, field=self.from_)
 
         return value
 

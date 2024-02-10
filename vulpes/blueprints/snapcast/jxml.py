@@ -166,12 +166,6 @@ class FeedItem(JXElement):
 
     def build(self):
         """Construct and return a podcast-compatible <item> tag."""
-        # Check the mandatory attributes.
-        for name in ["title", "media_url", "media_size",
-                     "media_type", "pub_date", "uuid"]:
-            if getattr(self, name) is None:
-                raise ValueError(f"{name} element is required.")
-
         # Required elements
         self.sub_elem("title", self.title)
         self.sub_elem("enclosure", attrib={
@@ -339,10 +333,6 @@ class PodcastFeed(JXElement):
         root.append(self)
 
         # Required fields.
-        for name in ["title", "description", "link"]:
-            if getattr(self, name) is None:
-                raise ValueError(f"{name} element is required.")
-
         self.sub_elem("title", self.title)
         # Maybe this could stand to be duplicated to itunes:summary?
         self.sub_elem("description", self.description)

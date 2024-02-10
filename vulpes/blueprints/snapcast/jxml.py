@@ -4,13 +4,21 @@ from typing import Optional
 from uuid import UUID
 from xml.etree import ElementTree as ETree
 
-mime_lookup = {
+media_mime = {
     ".m4a": "audio/x-m4a",
     ".mp3": "audio/mpeg",
     ".mov": "video/quicktime",
     ".mp4": "video/mp4",  # mp4 files should only be used for video.
     ".m4v": "video/x-m4v",
     ".pdf": "application/pdf",  # Why does itunes support pdf podcasts?
+}
+
+transcript_mime = {
+    ".txt":  "text/plain",
+    ".html": "text/html",
+    ".vtt":  "text/vtt",
+    ".json": "application/json",
+    ".srt":  "application/x-subrip",
 }
 
 
@@ -93,7 +101,6 @@ class FeedItem(JXElement):
         self.media_type: str = media_type
         """MIME type of the media file.
 
-
         Required, but iTunes ignores this value and uses only the media's file
         extension.
         """
@@ -119,7 +126,7 @@ class FeedItem(JXElement):
         """The season number of the episode.
 
         A serial show containing exactly one unnumbered season (season tag
-        ommitted) is often shown without an otherwise redundant season
+        omitted) is often shown without an otherwise redundant season
         selector in apps. Consider leaving this out if your podcast has
         numbered episodes but only one season."""
         self.episode: Optional[str | int] = None
@@ -153,6 +160,25 @@ class FeedItem(JXElement):
         Apple Podcasts at the time of writing.
         """
 
+        self.transcript: Optional[str] = None
+        """URL pointing to a file containing a transcript of the episode.
+
+        Behold! The first Podcasting 2.0 tag accepted by apple. I'm grumpy
+        about it but I guess this one is fine. Nice for accessibility and
+        usability.
+
+        IF your podcast is using Apple Podcasts Connect, they will generate
+        transcripts automatically for all episodes. How nice. Otherwise, link
+        it here.
+
+        Podcasting 2.0 says you can supply files in txt, html, vtt, srt, and
+        json formats. Apple says "Accepted types include" vtt and srt."""
+        self.transcript_type: Optional[str] = None
+        """MIME type of the transcript file.
+
+        Required if transcript is provided.
+        """
+
         # Does nothing in my tests. Only works at podcast level.
         # self.explicit: Optional[bool] = None
 
@@ -166,12 +192,6 @@ class FeedItem(JXElement):
 
     def build(self):
         """Construct and return a podcast-compatible <item> tag."""
-        # Check the mandatory attributes.
-        for name in ["title", "media_url", "media_size",
-                     "media_type", "pub_date", "uuid"]:
-            if getattr(self, name) is None:
-                raise ValueError(f"{name} element is required.")
-
         # Required elements
         self.sub_elem("title", self.title)
         self.sub_elem("enclosure", attrib={
@@ -202,10 +222,16 @@ class FeedItem(JXElement):
 
         # IME, apple podcats does not respect this tag at an episode level.
         # self.sub_element("itunes:explicit",
-        #                  text="yes" if self.explicit else "no")
+        #                  text="true" if self.explicit else "false")
 
         if (md := self.media_duration) is not None:
             self.sub_elem("itunes:duration", int(md.total_seconds()))
+
+        if self.transcript is not None and self.transcript_type is not None:
+            self.sub_elem("podcast:transcript", attrib={
+                "url": self.transcript,
+                "type": self.transcript_type,
+            })
 
         return self
 
@@ -218,7 +244,7 @@ class PodcastFeed(JXElement):
 
     * ``title``, ``description``, and ``link`` are vital. ``link`` is a URL to
       the website hosting the podcast or the feed's homepage.
-    * ``image`` is the URL to the podcasts's cover art. Apple Podcasts says it
+    * ``image`` is the URL to the podcast's cover art. Apple Podcasts says it
       should be a png or jpg between 1400 and 3000 px square. Transparency is
       very likely not handled well or at all. Probably keep it smaller for
       convenience. The feed validators always yell at me for my 2MB cover art.
@@ -267,7 +293,7 @@ class PodcastFeed(JXElement):
     _categories = []
 
     generator: str = "JXML - The J stands for June!"
-    """Indentifier for the feed-generating library."""
+    """Identifier for the feed-generating library."""
 
     def __init__(self,
                  title: str,
@@ -338,14 +364,11 @@ class PodcastFeed(JXElement):
             "version": "2.0",
             "xmlns:itunes": "http://www.itunes.com/dtds/podcast-1.0.dtd",
             "xmlns:atom": "http://www.w3.org/2005/Atom",
+            "xmlns:podcast": "https://podcastindex.org/namespace/1.0",
         })
         root.append(self)
 
         # Required fields.
-        for name in ["title", "description", "link"]:
-            if getattr(self, name) is None:
-                raise ValueError(f"{name} element is required.")
-
         self.sub_elem("title", self.title)
         # Maybe this could stand to be duplicated to itunes:summary?
         self.sub_elem("description", self.description)
@@ -358,7 +381,7 @@ class PodcastFeed(JXElement):
         self.sub_elem("link", self.link)
         self.sub_elem("language", self.language)
         self.sub_elem("itunes:new-feed-url", self.new_feed_url)
-        self.sub_elem("itunes:block", "yes" if self.itunes_block else None)
+        self.sub_elem("itunes:block", "Yes" if self.itunes_block else None)
         self.sub_elem("itunes:complete", "Yes" if self.complete else None)
         self.sub_elem("itunes:type",
                       "serial" if self.is_serial else "episodic")

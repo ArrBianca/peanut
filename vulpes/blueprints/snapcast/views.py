@@ -1,4 +1,6 @@
 from datetime import datetime, timedelta, timezone
+from os.path import splitext
+from urllib.parse import urlparse
 from uuid import UUID, uuid4
 
 from flask import Blueprint, Response, abort, request
@@ -7,16 +9,17 @@ from sqlalchemy.orm import joinedload
 
 from .jvalidate import (
     Pull,
-    episode_type,
+    as_datetime,
+    as_timedelta,
+    episode_types,
     image,
-    media_type,
+    media_exts,
     non_negative,
     positive,
-    to_datetime,
-    to_timedelta,
+    transcript_exts,
     url,
 )
-from .jxml import mime_lookup
+from .jxml import media_mime, transcript_mime
 from .models import Episode, Podcast
 from .util import authorization_required, touch_podcast
 from ... import db
@@ -85,35 +88,37 @@ def publish_episode(podcast_uuid: UUID):
         episode_type: str,
         season:       int,
         episode:      int,
+        transcript:   str,
 
     media_type is set automatically.
+    transcript_type is set automatically.
     """
     json = request.json
     if json is None:
-        return {}
+        abort(400, "Missing JSON request body.")
 
     # The structure of this should mimic that of the input dict.
     extractors = (
         Pull("title", required=True),
         Pull("subtitle"),
         Pull("description"),
-        Pull(
-            "timestamp",
-            to_datetime,
-            to="pub_date",
-            default=datetime.now(timezone.utc),
-        ),
+        Pull("timestamp",
+             as_datetime,
+             to="pub_date",
+             default=datetime.now(timezone.utc)),
 
-        Pull("url", url, media_type, to="media_url", required=True),
+        Pull("url", url, media_exts, to="media_url", required=True),
         Pull("size", non_negative, to="media_size", required=True),
-        Pull("duration", non_negative, to_timedelta, to="media_duration"),
+        Pull("duration", non_negative, as_timedelta, to="media_duration"),
 
         Pull("link", url),
         Pull("image", url, image),
 
-        Pull("episode_type", episode_type),
+        Pull("episode_type", episode_types),
         Pull("episode", positive),
         Pull("season", positive),
+
+        Pull("transcript", url, transcript_exts),
     )
     data = {}
     for extractor in extractors:
@@ -122,15 +127,19 @@ def publish_episode(podcast_uuid: UUID):
             # ValueError if it's required and missing.
             data[extractor.to] = extractor.run(json)
         except ValueError as e:
-            abort(400, description=e.__str__())
+            abort(400, description=str(e))
         except TypeError as e:
-            abort(422, description=e.__str__())
+            abort(422, description=str(e))
 
     # Right now data has the stuff from the JSON, now we add the extra
     # data needed for the db.
+    media_ext = splitext(urlparse(data["media_url"]).path)[1]
+    ts_ext = splitext(urlparse(data["transcript"]).path)[1]
+
     data["uuid"] = uuid4()
     data["podcast_uuid"] = podcast_uuid
-    data["media_type"] = mime_lookup[data["media_url"][-4:]]
+    data["media_type"] = media_mime[media_ext]
+    data["transcript_type"] = transcript_mime[ts_ext]
 
     db.session.add(Episode(**data))
     touch_podcast(podcast_uuid)

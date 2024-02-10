@@ -88,6 +88,8 @@ class Episode(FeedItem, db.Model, DatetimeFormattingModel):
         mapped_column(default=None)
     season: Mapped[Optional[int]]
     episode: Mapped[Optional[int]]
+    transcript: Mapped[Optional[str]]
+    transcript_type: Mapped[Optional[str]]
 
 
 class Category(DatetimeFormattingModel, db.Model):

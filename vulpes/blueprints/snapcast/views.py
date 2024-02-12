@@ -139,7 +139,8 @@ def publish_episode(podcast_uuid: UUID):
     data["uuid"] = uuid4()
     data["podcast_uuid"] = podcast_uuid
     data["media_type"] = media_mime[media_ext]
-    data["transcript_type"] = transcript_mime[ts_ext]
+    if "transcript_type" in data:
+        data["transcript_type"] = transcript_mime[ts_ext]
 
     db.session.add(Episode(**data))
     touch_podcast(podcast_uuid)
